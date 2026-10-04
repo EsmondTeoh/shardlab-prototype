@@ -158,12 +158,15 @@ input{font:inherit;color:inherit}
 .rolling{font-size:30px;font-weight:800;color:var(--brand-d);height:44px;margin:6px 0}
 .fab{position:absolute;right:0;top:46%;z-index:9;width:40px;height:48px;border-radius:14px 0 0 14px;background:var(--ink);color:#fff;font-size:18px;display:none;place-items:center;box-shadow:-4px 4px 16px rgba(0,0,0,.25)}
 .fab.show{display:grid}
-.pp{position:absolute;right:48px;top:calc(46% - 70px);z-index:9;width:236px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);display:none;border:1px solid var(--line)}
+.pp{position:absolute;right:48px;top:calc(46% - 150px);z-index:9;width:236px;max-height:76%;overflow-y:auto;background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);display:none;border:1px solid var(--line)}
 .pp.on{display:block}
 .pp h3{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand-d);margin-bottom:8px}
 .pp .sub{font-size:12px;color:var(--ink2);margin:0 0 6px}
 .pp .opt2{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;font-weight:600;margin-bottom:6px;background:#fff}
 .pp .opt2.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d)}
+.seg{display:flex;background:var(--line);border-radius:999px;padding:4px;margin:12px 16px 0}
+.seg button{flex:1;padding:10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--ink2)}
+.seg button.on{background:#fff;color:var(--brand-d);box-shadow:0 1px 4px rgba(0,0,0,.12)}
 </style>
 </head>
 <body>
@@ -183,10 +186,10 @@ input{font:inherit;color:inherit}
       <div class="opts">
         <button class="opt sel" data-mode="Dine-in"><span class="ic">🍽️</span><div><b>Dine-in</b><span>Order &amp; pay from your table</span></div></button>
         <button class="opt" data-mode="Takeaway"><span class="ic">🛍️</span><div><b>Takeaway</b><span>Ready in ~10 mins · Pick up at counter</span></div></button>
-        <button class="opt" data-mode="Group"><span class="ic">👥</span><div><b>Group order <span class="pill" style="font-size:11px;padding:2px 8px;margin-left:4px">NEW</span></b><span>4+ friends · one pays, earns 5% cashback</span></div></button>
+        <button class="opt" data-mode="Group"><span class="ic">👥</span><div><b>Group order <span class="pill" style="font-size:11px;padding:2px 8px;margin-left:4px">NEW</span></b><span>3+ people · one pays, earns 3% cashback</span></div></button>
       </div>
       <div class="card"><div class="row"><span class="muted">Pay with</span><span style="font-size:13px;font-weight:600">FPX · TNG · GrabPay · Boost · Cards</span></div>
-      <div class="row"><span class="muted">Cashback</span><span style="font-size:13px;font-weight:600">5% for group payers ✓</span></div>
+      <div class="row"><span class="muted">Cashback</span><span style="font-size:13px;font-weight:600">3% for group payers ✓</span></div>
       <div class="row"><span class="muted">e-Invoice</span><span style="font-size:13px;font-weight:600">MyInvois ready ✓</span></div></div>
     </div>
     <div class="foot"><button class="btn" id="startBtn">Start ordering</button></div>
@@ -350,7 +353,7 @@ const PAY=[
 ];
 const BANKS=["Maybank2u","CIMB Clicks","Public Bank","RHB Now","Hong Leong","AmBank","Bank Islam","BSN"];
 
-const CB_RATE=0.05, MIN_GROUP=4, MAX_GROUP=12;
+const CB_RATE=0.03, MIN_GROUP=3, MAX_GROUP=12;
 const NAMES=["Aisha","Wei Jie","Priya","Hafiz","Mei Ling","Raj","Siti","Daniel","Kavitha","Jun Hao","Nurul","Arjun"];
 const COLORS=["#6C3DF4","#E8590C","#0CA678","#D6336C","#1C7ED6","#F59F00","#7048E8","#099268"];
 const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"mixed",people:[],vote:null,phone:"",name:"",code:null};
@@ -364,10 +367,11 @@ const cbBal=()=>(ACC[S.phone]&&ACC[S.phone].cb)||0;
 function credit(phone,name,amt,note){const a=ACC[phone]||(ACC[phone]={name,cb:0,hist:[]});if(name)a.name=name;a.cb=r2(a.cb+amt);a.hist.unshift({t:Date.now(),amt:r2(amt),note});persist()}
 const fmtPh=v=>{v=v.replace(/\D/g,"");return v.length>3?v.slice(0,2)+" "+v.slice(2,6)+(v.length>6?" "+v.slice(6,10):""):v};
 const me=()=>S.people.find(p=>p.me);
+const hostName=()=>(S.people.find(p=>p.host)||{name:"Someone"}).name;
 const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
 
 /* nav */
-function go(id){protoVis(id);$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
+function go(id){protoVis(id);if(id==="checkout"&&!$("#phone").value){$("#phone").value="12 345 6789";S.phone="+60123456789"}$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
   ({menu:renderMenu,cart:renderCart,checkout:renderCheckout,pay:renderPay,lobby:renderLobby,vote:renderVote,profile:renderProfile})[id]?.();}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
 function openSheet(h){$("#sheetBody").innerHTML=h;$("#mask").classList.add("on");$("#sheet").classList.add("on")}
@@ -392,7 +396,7 @@ const count=()=>S.cart.reduce((a,l)=>a+l.qty,0);
 /* landing */
 $$(".opt").forEach(o=>o.onclick=()=>{$$(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");
   const g=o.dataset.mode==="Group";if(g!==S.isGroup){S.cart=[];S.people=[];S.vote=null}
-  S.isGroup=g;S.mode=g?"Dine-in":o.dataset.mode;$("#startBtn").textContent=g?"Create group order":"Start ordering"});
+  S.isGroup=g;S.mode=g?"Dine-in":o.dataset.mode;$("#startBtn").textContent=g?"Continue":"Start ordering"});
 $("#startBtn").onclick=()=>go(S.isGroup?"lobby":"menu");
 $("#profBtn").onclick=()=>go("profile");
 
@@ -467,12 +471,12 @@ function renderCheckout(){
   $("#s-checkout .back").dataset.go=g?"vote":"cart";
   $("#ckMode").textContent=g?`Group (${S.people.length} people) · Table 12`:S.mode==="Dine-in"?"Dine-in · Table 12":"Takeaway";
   if(g){if(!$("#name").value)$("#name").value=me().name;
-    $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (5%) cashback in your ShardLab profile once paid.</div></div>`}
+    $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (3%) cashback in your ShardLab profile once paid.</div></div>`}
   else $("#grpCk").innerHTML="";
   const bal=cbBal();
   $("#cbCard").innerHTML=!S.phone?`<div class="card"><div class="muted">💜 Enter your mobile number above to use your ShardLab cashback on this order.</div></div>`
    :bal>0?`<div class="card"><div class="einv"><div style="flex:1"><b style="font-size:14px">Use ShardLab cashback</b><div class="muted">Balance ${rm(bal)} · applies up to the bill total</div></div><button class="sw ${S.useCb?"on":""}" id="cbSw" aria-label="toggle cashback"></button></div></div>`
-   :`<div class="card"><div class="muted">💜 No cashback yet for ${S.phone}. Volunteer to pay on a group order to earn 5%.</div></div>`;
+   :`<div class="card"><div class="muted">💜 No cashback yet for ${S.phone}. Volunteer to pay on a group order to earn 3%.</div></div>`;
   const sw=$("#cbSw");if(sw)sw.onclick=()=>{S.useCb=!S.useCb;renderCheckout()};
   $("#sum").innerHTML=sumHTML();
 }
@@ -568,7 +572,7 @@ function finish(ok,msg){
   const no="SL"+Math.floor(10000+Math.random()*89999);
   const label=payLabel(t);let earned=0;
   if(t.cb>0)credit(S.phone,S.name,-t.cb,"Redeemed at Kopi Kaki Café");
-  if(S.isGroup){earned=r2(t.total*CB_RATE);credit(S.phone,S.name,earned,`5% group payer cashback · ${no}`)}
+  if(S.isGroup){earned=r2(t.total*CB_RATE);credit(S.phone,S.name,earned,`3% group payer cashback · ${no}`)}
   S.order={no,t,time:new Date(),items:[...S.cart],pay:label,ref:"SL"+Date.now().toString().slice(-9),earned,bal:cbBal(),
     payer:S.isGroup?me().name:null,payerMe:true,people:[...S.people]};
   S.useCb=false;renderDone();go("done");startProgress(no);
@@ -617,12 +621,12 @@ function renderDone(){
 }
 
 /* ---------- Group ordering ---------- */
-function addPerson(name,isMe){const p={id:"p"+(++pid),name,me:!!isMe,vote:null};S.people.push(p);
+function addPerson(name,isMe,isHost){const p={id:"p"+(++pid),name,me:!!isMe,host:!!isHost,vote:null};S.people.push(p);
   if(!isMe){const all=MENU.flatMap(c=>c.items);for(let i=0,n=1+Math.floor(Math.random()*2);i<n;i++){const it=all[Math.floor(Math.random()*all.length)];
     S.cart.push({uid:++cartSeq,id:it.id,n:it.n,e:it.e,c:it.c,desc:"Regular",price:it.p,qty:1,by:p.id})}}return p}
 /* ---------- Share ---------- */
 const inviteLink=()=>"https://shardlab.my/g/"+S.code.toLowerCase();
-const inviteMsg=(link=true)=>`${me().name} invited you to a group order at Kopi Kaki Café (Table 12). Join with code ${S.code}${link?": "+inviteLink():""}. Whoever pays earns 5% cashback on the bill.`;
+const inviteMsg=(link=true)=>`${hostName()} invited you to a group order at Kopi Kaki Café (Table 12). Join with code ${S.code}${link?": "+inviteLink():""}. Whoever pays earns 3% cashback on the bill.`;
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){return false}}
 function openShare(){
   openSheet(`<h3 style="font-size:17px;margin-bottom:4px">Invite friends</h3><p class="muted" style="margin-bottom:14px">Friends join with their name — no account needed.</p>
@@ -638,18 +642,19 @@ function openShare(){
 
 /* ---------- Prototype controls (floating) ---------- */
 function addFriend(){if(S.people.length>=MAX_GROUP)return;const used=S.people.map(p=>p.name);const nm=NAMES.find(x=>!used.includes(x))||"Guest"+(S.people.length+1);addPerson(nm);toast(nm+" joined the group")}
-function previewJoin(){$("#inviter").textContent=me().name;$("#guestName").value="";$("#guestErr").style.display="none";go("join")}
+function previewJoin(){$("#inviter").textContent=hostName();$("#guestName").value="";$("#guestErr").style.display="none";go("join")}
 function protoVis(id){const on=id==="lobby"&&me()||id==="vote";$("#protoFab").classList.toggle("show",!!on);$("#protoPanel").classList.remove("on")}
 function renderProto(){
-  const lobby=$("#s-lobby").classList.contains("on");
+  const onVote=$("#s-vote").classList.contains("on");
+  const again=()=>{if(onVote){startVote();renderVote()}else renderLobby();renderProto()};
   $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">When voting on who pays, friends…</div>
-   ${[["mixed","Respond randomly"],["all","All volunteer"],["none","None volunteer"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
-   ${lobby?`<div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>`
-   :`<div class="sub" style="margin-top:6px">Applies the next time a vote starts.</div>`}`;
-  $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;renderProto()});
-  if(lobby){$("#pAdd").onclick=()=>{addFriend();renderLobby();renderProto()};
-    $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();renderLobby();renderProto()};
-    $("#pPrev").onclick=()=>{$("#protoPanel").classList.remove("on");previewJoin()}}
+   ${[["mixed","Respond randomly"],["all","All volunteer"],["one","One friend volunteers"],["none","None volunteer"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
+   <div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>
+   ${onVote?`<div class="sub" style="margin-top:4px">Changes restart the vote.</div>`:""}`;
+  $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;onVote?again():renderProto()});
+  $("#pAdd").onclick=()=>{addFriend();again()};
+  $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();again()};
+  $("#pPrev").onclick=()=>{$("#protoPanel").classList.remove("on");previewJoin()};
 }
 $("#protoFab").onclick=e=>{e.stopPropagation();const p=$("#protoPanel");if(p.classList.toggle("on"))renderProto()};
 document.addEventListener("click",e=>{const p=e.composedPath();if(!p.includes($("#protoPanel"))&&!p.includes($("#protoFab")))$("#protoPanel").classList.remove("on")});
@@ -657,19 +662,34 @@ document.addEventListener("click",e=>{const p=e.composedPath();if(!p.includes($(
 function renderLobby(){
   const m=me(),n=S.people.length;
   if(!m){
-    $("#lobbyBody").innerHTML=`<div class="card"><h3>Start a group order</h3><p class="muted" style="margin-bottom:12px">Order together from one table. One person volunteers to pay — and earns 5% cashback on the whole bill.</p>
+    const mode=S.lobbyMode||"create";
+    $("#lobbyBody").innerHTML=`<div class="seg"><button data-lm="create" class="${mode==="create"?"on":""}">Create a group</button><button data-lm="join" class="${mode==="join"?"on":""}">Join a group</button></div>`+
+     (mode==="create"?`<div class="card"><h3>Start a group order</h3><p class="muted" style="margin-bottom:12px">Order together from one table. One person volunteers to pay — and earns 3% cashback on the whole bill.</p>
       <div class="field"><input id="hostName" placeholder="Your name" maxlength="20"></div><div class="err" id="hostErr">Please enter your name</div></div>
-      <div class="card"><h3>How it works</h3>${["Invite 3 or more friends — each joins with their name","Everyone adds their own items to one shared order","Volunteer to pay. If several volunteer, one is picked at random","The payer earns 5% cashback in their ShardLab profile"].map((t,i)=>`<div class="prow"><div class="av" style="background:var(--brand-l);color:var(--brand-d)">${i+1}</div><div class="nm" style="font-weight:500;font-size:14px">${t}</div></div>`).join("")}</div>`;
-    $("#lobbyFoot").innerHTML=`<button class="btn" id="mkGroup">Create group</button>`;
-    $("#mkGroup").onclick=()=>{const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
-      S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true);S.name=v;renderLobby();protoVis("lobby")};return}
+      <div class="card"><h3>How it works</h3>${["Invite 2 or more friends — each joins with their name","Everyone adds their own items to one shared order","Volunteer to pay. If several volunteer, one is picked at random","The payer earns 3% cashback in their ShardLab profile"].map((t,i)=>`<div class="prow"><div class="av" style="background:var(--brand-l);color:var(--brand-d)">${i+1}</div><div class="nm" style="font-weight:500;font-size:14px">${t}</div></div>`).join("")}</div>`
+     :`<div class="card"><h3>Join a friend's group</h3><p class="muted" style="margin-bottom:12px">Enter the code from your friend's invite and your name.</p>
+      <div class="field"><input id="joinCode" placeholder="Group code, e.g. KK-4821" maxlength="7" style="text-transform:uppercase"></div>
+      <div class="field"><input id="joinName" placeholder="Your name" maxlength="20"></div><div class="err" id="joinErr"></div>
+      <div class="muted">Demo: any code like KK-4821 works.</div></div>`);
+    $$("[data-lm]").forEach(b=>b.onclick=()=>{S.lobbyMode=b.dataset.lm;renderLobby()});
+    $("#lobbyFoot").innerHTML=`<button class="btn" id="setupGo">Continue</button>`;
+    $("#setupGo").onclick=()=>{
+      if(mode==="create"){const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
+        S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true,true);S.name=v;renderLobby();protoVis("lobby")}
+      else{const code=$("#joinCode").value.trim().toUpperCase(),v=$("#joinName").value.trim(),e=$("#joinErr");
+        if(!/^KK-\d{4}$/.test(code)){e.textContent="Enter a valid group code, like KK-4821";e.style.display="block";return}
+        if(!v){e.textContent="Please enter your name to join";e.style.display="block";return}
+        const pool=NAMES.filter(x=>x.toLowerCase()!==v.toLowerCase());
+        S.code=code;S.name=v;addPerson(pool[0],false,true);addPerson(pool[1]);addPerson(v,true,false);
+        renderLobby();protoVis("lobby");toast("You joined "+pool[0]+"'s group")}};
+    return}
   const need=Math.max(0,MIN_GROUP-n);
   $("#lobbyBody").innerHTML=`<div class="card"><h3>Invite friends</h3><div class="code">${S.code}</div>
      <div class="row"><span class="muted">shardlab.my/g/${S.code.toLowerCase()}</span><button id="shareBtn" style="background:var(--brand);color:#fff;font-weight:700;padding:8px 16px;border-radius:999px">↗ Share</button></div></div>
-    <div class="card"><h3>In this group (${n}/${MAX_GROUP})</h3>${S.people.map(p=>`<div class="prow">${avatar(p)}<div class="nm">${p.name}${p.me?` <small>You · host</small>`:`<small>Joined</small>`}</div></div>`).join("")}
+    <div class="card"><h3>In this group (${n}/${MAX_GROUP})</h3>${S.people.map(p=>`<div class="prow">${avatar(p)}<div class="nm">${p.name}<small>${p.host?(p.me?"You · host":"Host"):p.me?"You":"Joined"}</small></div></div>`).join("")}
       <div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>`;
   $("#shareBtn").onclick=openShare;
-  $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:`Start ordering · ${n} people`}</button>`;
+  $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:"Continue"}</button>`;
   $("#lobbyGo").onclick=()=>go("menu");
 }
 $("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr");
@@ -679,8 +699,9 @@ $("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr")
 
 function clearVote(){voteTimers.forEach(clearTimeout);voteTimers=[]}
 function startVote(){clearVote();S.people.forEach(p=>p.vote=null);S.vote={phase:"voting"};
-  S.people.filter(p=>!p.me).forEach((p,i)=>voteTimers.push(setTimeout(()=>{
-    p.vote=S.demo==="all"?"yes":S.demo==="none"?"no":(Math.random()<.4?"yes":"no");
+  const others=S.people.filter(p=>!p.me),pick=others[Math.floor(Math.random()*others.length)];
+  others.forEach((p,i)=>voteTimers.push(setTimeout(()=>{
+    p.vote=S.demo==="all"?"yes":S.demo==="none"?"no":S.demo==="one"?(p===pick?"yes":"no"):(Math.random()<.4?"yes":"no");
     if($("#s-vote").classList.contains("on"))renderVote();checkVote()},1300+i*1000+Math.random()*500)))}
 function checkVote(){if(!S.vote||S.vote.phase!=="voting"||!S.people.every(p=>p.vote))return;
   const v=S.people.filter(p=>p.vote==="yes");
@@ -693,7 +714,7 @@ function draw(pool,info){S.vote={phase:"drawing"};renderVote();
 function renderVote(){
   const v=S.vote||{phase:"voting"},t=totals(),cbAmt=rm(r2(t.total*CB_RATE)),m=me();
   let h="",foot=false;
-  if(v.phase==="voting")h=`<div class="cb"><span class="big">💜</span><div>Volunteer to pay the <b>${rm(t.total)}</b> bill and earn <b>${cbAmt}</b> (5%) cashback in your ShardLab profile.</div></div>
+  if(v.phase==="voting")h=`<div class="cb"><span class="big">💜</span><div>Volunteer to pay the <b>${rm(t.total)}</b> bill and earn <b>${cbAmt}</b> (3%) cashback in your ShardLab profile.</div></div>
     <div class="votebtns"><button class="vb ${m.vote==="yes"?"on":""}" id="vYes"><b>🙋 I'll pay</b><span>Earn ${cbAmt} cashback · if several volunteer, one is picked at random</span></button>
     <button class="vb ${m.vote==="no"?"on":""}" id="vNo"><b>Not me</b><span>Someone else can pay</span></button></div>
     ${m.vote?`<div class="muted" style="text-align:center;margin:12px 16px 0">Waiting for ${S.people.filter(p=>!p.vote).length||"everyone"} more…</div>`:""}`;
@@ -728,8 +749,8 @@ function renderProfile(){
     <button class="btn" id="pLook">View my cashback</button></div>`+
    (a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Use it on your next visit — switch it on at checkout.</span></div>
     <div class="card"><h3>Activity</h3>${a.hist.length?a.hist.map(h=>`<div class="prow"><div class="nm" style="font-weight:600;font-size:14px">${h.note}<small>${new Date(h.t).toLocaleDateString("en-MY")}</small></div><b style="color:${h.amt>=0?"var(--green)":"var(--ink)"}">${h.amt>=0?"+":"−"} ${rm(Math.abs(h.amt))}</b></div>`).join(""):`<div class="muted">No activity yet</div>`}</div>`
-   :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 5% cashback — your profile is created automatically.</div></div>`
-   :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 5% on the whole bill.</div></div>`);
+   :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 3% cashback — your profile is created automatically.</div></div>`
+   :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 3% on the whole bill.</div></div>`);
   $("#pPhone").oninput=e=>e.target.value=fmtPh(e.target.value);
   $("#pLook").onclick=()=>{const d=$("#pPhone").value.replace(/\D/g,"");if(!/^1\d{8,9}$/.test(d))return toast("Enter a valid mobile number");S.phone="+60"+d;S.useCb=false;renderProfile()};
 }
