@@ -2,9 +2,13 @@
 
 ## 1. Prototype and access
 
+**Links**
+- **Live prototype (GitHub Pages):** https://esmondteoh.github.io/shardlab-prototype/
+- **Source (GitHub repo):** https://github.com/EsmondTeoh/shardlab-prototype
+
 - **File:** `index.html`. It is a single, self-contained file with no build step and no dependencies.
 - **To run:** double-click `index.html` to open it in any modern browser, or run `python3 -m http.server 8765` in the same folder and visit `http://localhost:8765/index.html`.
-- **Best viewed:** on a phone, or in browser dev tools at 375×812. On desktop it renders inside a phone-sized frame.
+- **Layout:** the app always runs inside a 375px-wide Google Chrome mobile window (status bar, address bar, tab counter, menu), on desktop and on phones. The Chrome controls are decorative; only the app inside is interactive. Every screen was checked at exactly 375px width for overflow.
 - **Screen recording:** `[ATTACH: recording not yet made]`
 
 ### Suggested walkthrough (about 2 minutes)
@@ -47,6 +51,7 @@
 - **Kitchen status:** the Paid → Preparing → Ready tracker advances on timers.
 - **Invite link:** `shardlab.my/g/...` is a placeholder domain. Sharing the message works, but the link does not join a real group.
 - **Messaging and e-Invoice:** the "sent via WhatsApp" line and the MyInvois e-Invoice request form are UI only.
+- **Chrome frame:** the status bar, address bar, tab counter and menu are a static mock-up, not a real browser.
 - **Menu, store and prices:** invented ("Kopi Kaki Café").
 
 **Incomplete or unverified**
