@@ -200,7 +200,7 @@ input{font:inherit;color:inherit}
         <button class="opt" data-mode="Group"><span class="ic">👥</span><div><b>Group order <span class="pill" style="font-size:11px;padding:2px 8px;margin-left:4px">NEW</span></b><span>3+ people · one pays, earns 3% cashback</span></div></button>
       </div>
       <div class="card"><div class="row"><span class="muted">Pay with</span><span style="font-size:13px;font-weight:600">FPX · TNG · GrabPay · Boost · Cards</span></div>
-      <div class="row"><span class="muted">Cashback</span><span style="font-size:13px;font-weight:600">3% for group payers ✓</span></div>
+      <div class="row"><span class="muted">Cashback</span><span style="font-size:13px;font-weight:600">3% back · use on your next order ✓</span></div>
       <div class="row"><span class="muted">e-Invoice</span><span style="font-size:13px;font-weight:600">MyInvois ready ✓</span></div></div>
     </div>
     <div class="foot"><button class="btn" id="startBtn">Start ordering</button></div>
@@ -363,7 +363,13 @@ let LASTPH=(()=>{try{return localStorage.getItem(LK)||""}catch(e){return""}})();
 const rememberPhone=p=>{LASTPH=p;try{localStorage.setItem(LK,p)}catch(e){}};
 const startPhone=()=>LASTPH||"+60123456789"; /* last number used, else the demo number */
 const cbBal=()=>(ACC[S.phone]&&ACC[S.phone].cb)||0;
-function credit(phone,name,amt,note){const a=ACC[phone]||(ACC[phone]={name,cb:0,hist:[]});if(name)a.name=name;a.cb=r2(a.cb+amt);a.hist.unshift({t:Date.now(),amt:r2(amt),note});persist()}
+/* cashback earned on an order is locked ("pend") and only becomes usable (cb) on the next visit or order */
+function credit(phone,name,amt,note,locked){const a=ACC[phone]||(ACC[phone]={name,cb:0,pend:0,hist:[]});if(name)a.name=name;
+  if(locked)a.pend=r2((a.pend||0)+amt);else a.cb=r2(a.cb+amt);
+  a.hist.unshift({t:Date.now(),amt:r2(amt),note,locked:!!locked});persist()}
+const pendBal=()=>(ACC[S.phone]&&ACC[S.phone].pend)||0;
+function releasePending(){let n=0;Object.values(ACC).forEach(a=>{if(a.pend){a.cb=r2(a.cb+a.pend);a.pend=0;n++}(a.hist||[]).forEach(h=>h.locked=false)});if(n)persist()}
+releasePending(); /* a new page load is a new visit */
 const fmtPh=v=>{v=v.replace(/\D/g,"");return v.length>3?v.slice(0,2)+" "+v.slice(2,6)+(v.length>6?" "+v.slice(6,10):""):v};
 const me=()=>S.people.find(p=>p.me);
 const hostName=()=>(S.people.find(p=>p.host)||{name:S.hostName||"Someone"}).name;
@@ -470,12 +476,12 @@ function renderCheckout(){
   $("#s-checkout .back").dataset.go=g?"vote":"cart";
   $("#ckMode").textContent=g?`Group (${S.people.length} people) · Table 12`:S.mode==="Dine-in"?"Dine-in · Table 12":"Takeaway";
   if(g){if(!$("#name").value)$("#name").value=me().name;
-    $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (3%) cashback in your ShardLab profile once paid.</div></div>`}
+    $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (3%) cashback in your ShardLab profile once paid. You can use it from your next visit or order.</div></div>`}
   else $("#grpCk").innerHTML="";
   const bal=cbBal();
   const applied=r2(Math.min(bal,t.total)),earn=r2(t.total*CB_RATE);
   $("#cbCard").innerHTML=!S.phone?`<div class="card"><div class="muted">💜 Enter your mobile number above to use or save your ShardLab cashback.</div></div>`
-   :bal>0?`<div class="card"><h3>ShardLab cashback <span class="pill" style="margin-left:6px">Balance ${rm(bal)}</span></h3>${g?`<div class="muted" style="margin:-4px 0 10px">You earn ${rm(earn)} cashback on this order either way.</div>`:""}
+   :bal>0?`<div class="card"><h3>ShardLab cashback <span class="pill" style="margin-left:6px">Available ${rm(bal)}</span></h3>${g?`<div class="muted" style="margin:-4px 0 10px">You earn ${rm(earn)} cashback on this order either way.</div>`:""}
      <button class="pm ${S.useCb?"sel":""}" data-cb="1"><div class="lg" style="background:var(--brand);font-size:18px">💜</div><div><b>Use my cashback</b><span>Take ${rm(applied)} off this order · ${rm(r2(bal-applied))} stays in your profile</span></div><div class="radio"></div></button>
      <button class="pm ${S.useCb?"":"sel"}" data-cb="0" style="margin-bottom:0"><div class="lg" style="background:var(--ink);font-size:18px">🏦</div><div><b>Keep saving</b><span>Keep ${rm(bal)} for a later visit</span></div><div class="radio"></div></button></div>`
    :`<div class="card"><div class="muted">💜 No cashback yet for ${S.phone}. Volunteer to pay on a group order to earn 3%.</div></div>`;
@@ -574,8 +580,8 @@ function finish(ok,msg){
   const no="SL"+Math.floor(10000+Math.random()*89999);
   const label=payLabel(t);let earned=0;
   if(t.cb>0)credit(S.phone,S.name,-t.cb,"Redeemed at Kopi Kaki Café");
-  if(S.isGroup){earned=r2(t.total*CB_RATE);credit(S.phone,S.name,earned,`3% group payer cashback · ${no}`)}
-  S.order={no,t,time:new Date(),items:[...S.cart],pay:label,ref:"SL"+Date.now().toString().slice(-9),earned,bal:cbBal(),
+  if(S.isGroup){earned=r2(t.total*CB_RATE);credit(S.phone,S.name,earned,`3% group payer cashback · ${no}`,true)}
+  S.order={no,t,time:new Date(),items:[...S.cart],pay:label,ref:"SL"+Date.now().toString().slice(-9),earned,bal:cbBal(),locked:earned,
     payer:S.isGroup?me().name:null,payerMe:true,people:[...S.people]};
   S.useCb=false;renderDone();go("done");startProgress(no);
 }
@@ -586,7 +592,7 @@ function renderDone(){
   const nameOf=id=>(o.people.find(p=>p.id===id)||{}).name;
   const keep=$("#doneBody").scrollTop;
   $("#doneBody").innerHTML=`<div style="text-align:center;padding:0 16px"><div class="ok">✓</div><h2>${o.payerMe?"Payment successful":o.payer+" paid the bill"}</h2><div class="muted" style="margin-top:4px">${o.payerMe?`${rm(t.pay)} paid via ${o.pay}`:"Your group's order is confirmed — nothing to pay"}</div></div>
-  ${g&&o.payerMe&&o.earned?`<div class="cb"><span class="big">💜</span><div><b>+${rm(o.earned)} cashback earned</b><br>Added to your ShardLab profile · balance <b>${rm(o.bal)}</b>. Use it on your next visit by entering ${S.phone} at checkout.<br><button id="seeProf" style="font-weight:800;text-decoration:underline;margin-top:6px">View profile</button></div></div>`:""}
+  ${g&&o.payerMe&&o.earned?`<div class="cb"><span class="big">💜</span><div><b>+${rm(o.earned)} cashback earned</b><br>Added to your ShardLab profile, <b>locked until your next visit or order</b>. Available to use now: <b>${rm(o.bal)}</b>.<br><button id="seeProf" style="font-weight:800;text-decoration:underline;margin-top:6px">View profile</button></div></div>`:""}
   ${t.cb?`<div class="cb" style="background:var(--brand-l)"><span class="big">💜</span><div>You used <b>${rm(t.cb)}</b> of ShardLab cashback on this order.</div></div>`:""}
   ${g&&!o.payerMe?`<div class="cb" style="background:var(--brand-l)"><span class="big">💳</span><div><b>${o.payer}</b> is the group payer and earns <b>${rm(r2(t.total*CB_RATE))}</b> cashback.</div></div>`:""}
   <div class="card" style="text-align:center"><div class="muted">Order number</div><div style="font-size:36px;font-weight:800;color:var(--brand-d);letter-spacing:1px">${o.no}</div>
@@ -618,7 +624,7 @@ function renderDone(){
   const sp=$("#seeProf");if(sp)sp.onclick=()=>go("profile");
   const es=$("#einvSend");if(es)es.onclick=()=>{if(!$("#tin").value.trim())return toast("Please enter your TIN");toast("e-Invoice request submitted ✓");es.disabled=true;es.textContent="Submitted ✓"};
   $("#stars").onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),n=Math.ceil((e.clientX-r.left)/r.width*5);e.currentTarget.textContent="★".repeat(n)+"☆".repeat(5-n);toast("Thanks for your feedback!")};
-  $("#again").onclick=()=>{clearVote();S.cart=[];S.promo=null;S.pay=null;S.bank=null;S.order=null;S.einv=false;S.useCb=false;S.people=[];S.vote=null;S.isGroup=false;S.hostName=null;stopAutoJoin();S.mode="Dine-in";S.code=null;
+  $("#again").onclick=()=>{releasePending();clearVote();S.cart=[];S.promo=null;S.pay=null;S.bank=null;S.order=null;S.einv=false;S.useCb=false;S.people=[];S.vote=null;S.isGroup=false;S.hostName=null;stopAutoJoin();S.mode="Dine-in";S.code=null;
     $$(".opt").forEach((x,i)=>x.classList.toggle("sel",i===0));$("#startBtn").textContent="Start ordering";$("#promo").value="";go("landing")};
 }
 
@@ -706,7 +712,7 @@ function draw(pool,info){S.vote={phase:"drawing"};renderVote();
 function renderVote(){
   const v=S.vote||{phase:"voting"},t=totals(),cbAmt=rm(r2(t.total*CB_RATE)),m=me();
   let h="",foot=false;
-  if(v.phase==="voting")h=`<div class="cb"><span class="big">💜</span><div>Volunteer to pay the <b>${rm(t.total)}</b> bill and earn <b>${cbAmt}</b> (3%) cashback in your ShardLab profile.</div></div>
+  if(v.phase==="voting")h=`<div class="cb"><span class="big">💜</span><div>Volunteer to pay the <b>${rm(t.total)}</b> bill and earn <b>${cbAmt}</b> (3%) cashback in your ShardLab profile, usable from your next visit or order.</div></div>
     <div class="votebtns"><button class="vb ${m.vote==="yes"?"on":""}" id="vYes"><b>🙋 I'll pay</b><span>Earn ${cbAmt} cashback · if several volunteer, one is picked at random</span></button>
     <button class="vb ${m.vote==="no"?"on":""}" id="vNo"><b>Not me</b><span>Someone else can pay</span></button></div>
     ${m.vote?`<div class="muted" style="text-align:center;margin:12px 16px 0">Waiting for ${S.people.filter(p=>!p.vote).length||"everyone"} more…</div>`:""}`;
@@ -737,8 +743,8 @@ function toWait(w){$("#waitAv").innerHTML=avatar(w,"lg");$("#waitT").textContent
 /* ---------- Profile ---------- */
 function profileResult(){
   const a=ACC[S.phone];
-  return a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Use it on your next visit — switch it on at checkout.</span></div>
-    <div class="card"><h3>Activity</h3>${a.hist.length?a.hist.map(h=>`<div class="prow"><div class="nm" style="font-weight:600;font-size:14px">${h.note}<small>${new Date(h.t).toLocaleDateString("en-MY")}</small></div><b style="color:${h.amt>=0?"var(--green)":"var(--ink)"}">${h.amt>=0?"+":"−"} ${rm(Math.abs(h.amt))}</b></div>`).join(""):`<div class="muted">No activity yet</div>`}</div>`
+  return a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Available now. Choose to use it or keep saving at checkout.</span>${a.pend?`<span style="margin-top:8px;background:rgba(255,255,255,.2);padding:6px 10px;border-radius:999px;font-size:13px;font-weight:600">🔒 +${rm(a.pend)} unlocks on your next visit or order</span>`:""}</div>
+    <div class="card"><h3>Activity</h3>${a.hist.length?a.hist.map(h=>`<div class="prow"><div class="nm" style="font-weight:600;font-size:14px">${h.note}<small>${new Date(h.t).toLocaleDateString("en-MY")}${h.locked?" · unlocks next visit or order":""}</small></div><b style="color:${h.amt>=0?"var(--green)":"var(--ink)"}">${h.amt>=0?"+":"−"} ${rm(Math.abs(h.amt))}</b></div>`).join(""):`<div class="muted">No activity yet</div>`}</div>`
    :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 3% cashback — your profile is created automatically.</div></div>`
    :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 3% on the whole bill.</div></div>`}
 function renderProfile(){

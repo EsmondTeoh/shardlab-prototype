@@ -21,8 +21,8 @@
    - **Not me** while a friend volunteered → that friend pays and you get a "paid by" confirmation.
    - **Not me** while nobody volunteered → the "Nobody volunteered" fallback.
 6. **Continue to payment** → the mobile number is prefilled (`12 3456 789`) → pay with any method → use the "Simulate" buttons.
-7. See the **cashback earned** card, then tap **Order again**.
-8. Reload the page (a later visit) and place another order as **Dine-in**, **Takeaway** or **Group order**. Checkout recognises your last mobile number and shows a **ShardLab cashback** card with your balance. Choose **Use my cashback** (takes it off the bill; any remainder stays saved, and a fully covered bill skips payment) or **Keep saving** (the default; nothing is deducted). The 👤 Profile button on the landing page shows the balance and history (edit the number to look up another).
+7. See the **cashback earned** card: the 3% is **locked until your next visit or order**, so it cannot be used on the order that earned it. The Profile shows it as locked. Then tap **Order again**.
+8. Start a new order (**Order again**) or reload the page (a later visit): the locked cashback is now available. Place another order as **Dine-in**, **Takeaway** or **Group order**. Checkout recognises your last mobile number and shows a **ShardLab cashback** card with your balance. Choose **Use my cashback** (takes it off the bill; any remainder stays saved, and a fully covered bill skips payment) or **Keep saving** (the default; nothing is deducted). The 👤 Profile button on the landing page shows the balance and history (edit the number to look up another).
 
 ## 2. What works, what is simulated, what is incomplete
 
@@ -42,7 +42,7 @@
   - Payer and non-payer paths.
 - Invite sharing from the group lobby: **WhatsApp** opens a real `wa.me` link with the invite prefilled. **Slack** uses the phone's native share sheet when available. Otherwise it copies the invite and opens Slack, because a plain web page cannot post into Slack. **Copy link** also works.
 - Checkout is prefilled with a mock Malaysian number (`12 3456 789`), so a second order on the same number finds the cashback.
-- Cashback: 3% of the bill total credited to the payer's profile. On any later visit, for dine-in, takeaway or group orders, the customer chooses at checkout to use it (partly or fully covering the bill) or keep saving it. A group payer who uses cashback still earns 3% on the full bill.
+- Cashback: 3% of the bill total credited to the payer's profile, **locked until their next visit or order** (it unlocks when they tap Order again or reopen the app, and never applies to the order that earned it). From then on, for dine-in, takeaway or group orders, the customer chooses at checkout to use it (partly or fully covering the bill) or keep saving it. A group payer who uses cashback still earns 3% on the full bill.
 
 **Simulated**
 - **Other group members:** there is no backend or real multi-device sync. Friends are generated in the page, join on their own 2 seconds after the group opens, and "vote" on timers. Most decline; at most half ever volunteer.
@@ -66,7 +66,7 @@
   - A group needs at least 3 people.
   - The cap is 12.
   - Cashback is 3% of the total bill before any cashback is redeemed.
-  - Cashback never expires and has no cap.
+  - Cashback never expires and has no cap, and "next visit or order" means the next order started after this one finishes, or the next time the app is opened. Unused cashback keeps carrying over until the customer chooses to use it.
   - A payer who volunteers can still change their vote until everyone has voted.
 - The group payer is not notified separately. Everyone just sees the result on screen.
 - No accessibility audit, and no handling for a person leaving the group mid-order.
