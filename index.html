@@ -375,7 +375,7 @@ const BANKS=["Maybank2u","CIMB Clicks","Public Bank","RHB Now","Hong Leong","AmB
 const CB_RATE=0.03, MIN_GROUP=3, MAX_GROUP=12;
 const NAMES=["Aisha","Wei Jie","Priya","Hafiz","Mei Ling","Raj","Siti","Daniel","Kavitha","Jun Hao","Nurul","Arjun"];
 const COLORS=["#6C3DF4","#E8590C","#0CA678","#D6336C","#1C7ED6","#F59F00","#7048E8","#099268"];
-const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"me",people:[],vote:null,phone:"",name:"",code:null};
+const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"mostly",people:[],vote:null,phone:"",name:"",code:null};
 let cartSeq=0,pid=0,voteTimers=[];
 const r2=n=>Math.round(n*100)/100;
 /* ShardLab accounts: keyed by mobile number, persisted in this browser */
@@ -386,7 +386,7 @@ const cbBal=()=>(ACC[S.phone]&&ACC[S.phone].cb)||0;
 function credit(phone,name,amt,note){const a=ACC[phone]||(ACC[phone]={name,cb:0,hist:[]});if(name)a.name=name;a.cb=r2(a.cb+amt);a.hist.unshift({t:Date.now(),amt:r2(amt),note});persist()}
 const fmtPh=v=>{v=v.replace(/\D/g,"");return v.length>3?v.slice(0,2)+" "+v.slice(2,6)+(v.length>6?" "+v.slice(6,10):""):v};
 const me=()=>S.people.find(p=>p.me);
-const hostName=()=>(S.people.find(p=>p.host)||{name:"Someone"}).name;
+const hostName=()=>(S.people.find(p=>p.host)||{name:S.hostName||"Someone"}).name;
 const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
 
 /* nav */
@@ -414,7 +414,7 @@ const count=()=>S.cart.reduce((a,l)=>a+l.qty,0);
 
 /* landing */
 $$(".opt").forEach(o=>o.onclick=()=>{$$(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");
-  const g=o.dataset.mode==="Group";if(g!==S.isGroup){S.cart=[];S.people=[];S.vote=null}
+  const g=o.dataset.mode==="Group";if(g!==S.isGroup){S.cart=[];S.people=[];S.vote=null;stopAutoJoin()}
   S.isGroup=g;S.mode=g?"Dine-in":o.dataset.mode;$("#startBtn").textContent=g?"Continue":"Start ordering"});
 $("#startBtn").onclick=()=>go(S.isGroup?"lobby":"menu");
 $("#profBtn").onclick=()=>go("profile");
@@ -635,7 +635,7 @@ function renderDone(){
   const sp=$("#seeProf");if(sp)sp.onclick=()=>go("profile");
   const es=$("#einvSend");if(es)es.onclick=()=>{if(!$("#tin").value.trim())return toast("Please enter your TIN");toast("e-Invoice request submitted ✓");es.disabled=true;es.textContent="Submitted ✓"};
   $("#stars").onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),n=Math.ceil((e.clientX-r.left)/r.width*5);e.currentTarget.textContent="★".repeat(n)+"☆".repeat(5-n);toast("Thanks for your feedback!")};
-  $("#again").onclick=()=>{clearVote();S.cart=[];S.promo=null;S.pay=null;S.bank=null;S.order=null;S.einv=false;S.useCb=false;S.people=[];S.vote=null;S.isGroup=false;S.mode="Dine-in";S.code=null;
+  $("#again").onclick=()=>{clearVote();S.cart=[];S.promo=null;S.pay=null;S.bank=null;S.order=null;S.einv=false;S.useCb=false;S.people=[];S.vote=null;S.isGroup=false;S.hostName=null;stopAutoJoin();S.mode="Dine-in";S.code=null;
     $$(".opt").forEach((x,i)=>x.classList.toggle("sel",i===0));$("#startBtn").textContent="Start ordering";$("#promo").value="";go("landing")};
 }
 
@@ -666,10 +666,10 @@ function protoVis(id){const on=id==="lobby"&&me()||id==="vote";$("#protoFab").cl
 function renderProto(){
   const onVote=$("#s-vote").classList.contains("on");
   const again=()=>{if(onVote){startVote();renderVote()}else renderLobby();renderProto()};
-  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">Scenario for who pays</div>
-   ${[["me","I'm the payer (default)"],["mixed","Friends respond randomly"],["all","Everyone volunteers"],["one","A friend pays instead"],["none","Nobody volunteers"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
+  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">How your friends vote</div>
+   ${[["mostly","Most friends decline (default)"],["all","Everyone volunteers"],["one","One friend volunteers"],["none","Nobody volunteers"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
    <div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>
-   <div class="sub" style="margin-top:4px">You are the default payer, including in draws. Changes restart the vote.</div>`;
+   <div class="sub" style="margin-top:4px">You choose for yourself, and win draws. Changes restart the vote.</div>`;
   $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;onVote?again():renderProto()});
   $("#pAdd").onclick=()=>{addFriend();again()};
   $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();again()};
@@ -677,6 +677,17 @@ function renderProto(){
 }
 $("#protoFab").onclick=e=>{e.stopPropagation();const p=$("#protoPanel");if(p.classList.toggle("on"))renderProto()};
 document.addEventListener("click",e=>{const p=e.composedPath();if(!p.includes($("#protoPanel"))&&!p.includes($("#protoFab")))$("#protoPanel").classList.remove("on")});
+
+/* other members join by themselves 2 seconds after the group opens */
+function stopAutoJoin(){clearTimeout(S.joinTimer);S.joining=false}
+function scheduleAutoJoin(asGuest){stopAutoJoin();const tok=S.code;S.joining=true;
+  S.joinTimer=setTimeout(()=>{S.joining=false;if(S.code!==tok||!S.isGroup||!me())return;
+    const next=()=>NAMES.find(x=>!S.people.some(p=>p.name.toLowerCase()===x.toLowerCase()));
+    const added=[];
+    if(asGuest)added.push(addPerson(S.hostName,false,true).name);
+    while(S.people.length<MIN_GROUP)added.push(addPerson(next()).name);
+    toast(added.join(" and ")+" joined the group");
+    if($("#s-lobby").classList.contains("on"))renderLobby()},2000)}
 
 function renderLobby(){
   const m=me(),n=S.people.length;
@@ -694,19 +705,19 @@ function renderLobby(){
     $("#lobbyFoot").innerHTML=`<button class="btn" id="setupGo">Continue</button>`;
     $("#setupGo").onclick=()=>{
       if(mode==="create"){const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
-        S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true,true);S.name=v;renderLobby();protoVis("lobby")}
+        S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true,true);S.name=v;scheduleAutoJoin(false);renderLobby();protoVis("lobby")}
       else{const code=$("#joinCode").value.trim().toUpperCase(),v=$("#joinName").value.trim(),e=$("#joinErr");
         if(!/^KK-\d{4}$/.test(code)){e.textContent="Enter a valid group code, like KK-4821";e.style.display="block";return}
         if(!v){e.textContent="Please enter your name to join";e.style.display="block";return}
         const pool=NAMES.filter(x=>x.toLowerCase()!==v.toLowerCase());
-        S.code=code;S.name=v;addPerson(pool[0],false,true);addPerson(pool[1]);addPerson(v,true,false);
+        S.code=code;S.name=v;S.hostName=pool[0];addPerson(v,true,false);scheduleAutoJoin(true);
         renderLobby();protoVis("lobby");toast("You joined "+pool[0]+"'s group")}};
     return}
   const need=Math.max(0,MIN_GROUP-n);
   $("#lobbyBody").innerHTML=`<div class="card"><h3>Invite friends</h3><div class="code">${S.code}</div>
      <div class="row"><span class="muted">shardlab.my/g/${S.code.toLowerCase()}</span><button id="shareBtn" style="background:var(--brand);color:#fff;font-weight:700;padding:8px 16px;border-radius:999px">↗ Share</button></div></div>
     <div class="card"><h3>In this group (${n}/${MAX_GROUP})</h3>${S.people.map(p=>`<div class="prow">${avatar(p)}<div class="nm">${p.name}<small>${p.host?(p.me?"You · host":"Host"):p.me?"You":"Joined"}</small></div></div>`).join("")}
-      <div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>`;
+      ${S.joining?`<div class="prow"><div class="spin" style="width:24px;height:24px;border-width:3px;margin:7px;flex:none"></div><div class="nm muted" style="font-weight:500">Waiting for friends to join…</div></div>`:""}<div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>`;
   $("#shareBtn").onclick=openShare;
   $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:"Continue"}</button>`;
   $("#lobbyGo").onclick=()=>go("menu");
@@ -718,11 +729,13 @@ $("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr")
 
 function clearVote(){voteTimers.forEach(clearTimeout);voteTimers=[]}
 function startVote(){clearVote();S.people.forEach(p=>p.vote=null);S.vote={phase:"voting"};
-  /* the person using the prototype is the default payer: their vote starts as "I'll pay" unless the scenario says otherwise */
-  me().vote=(S.demo==="one"||S.demo==="none")?"no":"yes";
-  const others=S.people.filter(p=>!p.me),pick=others[Math.floor(Math.random()*others.length)];
+  /* the user's own vote starts unselected; the scenario only decides how friends respond */
+  const others=S.people.filter(p=>!p.me),shuffled=[...others].sort(()=>Math.random()-.5),yes=new Set();
+  if(S.demo==="all")others.forEach(p=>yes.add(p));
+  else if(S.demo==="one")yes.add(shuffled[0]);
+  else if(S.demo==="mostly")shuffled.slice(0,Math.min(Math.floor(others.length/2),Math.random()<.5?0:1)).forEach(p=>yes.add(p));
   others.forEach((p,i)=>voteTimers.push(setTimeout(()=>{
-    p.vote=S.demo==="all"?"yes":S.demo==="one"?(p===pick?"yes":"no"):S.demo==="mixed"?(Math.random()<.4?"yes":"no"):"no";
+    p.vote=yes.has(p)?"yes":"no";
     if($("#s-vote").classList.contains("on"))renderVote();checkVote()},1300+i*1000+Math.random()*500)))}
 function checkVote(){if(!S.vote||S.vote.phase!=="voting"||!S.people.every(p=>p.vote))return;
   const v=S.people.filter(p=>p.vote==="yes");
