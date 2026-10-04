@@ -165,14 +165,6 @@ input{font:inherit;color:inherit}
 .gsec{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin:10px 0 2px}
 .gsec .av{width:26px;height:26px;font-size:12px}
 .rolling{font-size:30px;font-weight:800;color:var(--brand-d);height:44px;margin:6px 0}
-.fab{position:absolute;right:0;top:46%;z-index:9;width:40px;height:48px;border-radius:14px 0 0 14px;background:var(--ink);color:#fff;font-size:18px;display:none;place-items:center;box-shadow:-4px 4px 16px rgba(0,0,0,.25)}
-.fab.show{display:grid}
-.pp{position:absolute;right:48px;top:calc(46% - 150px);z-index:9;width:236px;max-height:76%;overflow-y:auto;background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);display:none;border:1px solid var(--line)}
-.pp.on{display:block}
-.pp h3{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand-d);margin-bottom:8px}
-.pp .sub{font-size:12px;color:var(--ink2);margin:0 0 6px}
-.pp .opt2{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;font-weight:600;margin-bottom:6px;background:#fff}
-.pp .opt2.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d)}
 .seg{display:flex;background:var(--line);border-radius:999px;padding:4px;margin:12px 16px 0}
 .seg button{flex:1;padding:10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--ink2)}
 .seg button.on{background:#fff;color:var(--brand-d);box-shadow:0 1px 4px rgba(0,0,0,.12)}
@@ -290,21 +282,6 @@ input{font:inherit;color:inherit}
     <div class="foot" id="lobbyFoot"></div>
   </section>
 
-  <!-- GUEST JOIN -->
-  <section class="screen" id="s-join">
-    <div class="hdr"><button class="back" data-go="lobby">‹</button><h2>Join group order</h2></div>
-    <div class="scroll" style="padding:24px 16px">
-      <div class="card" style="text-align:center;margin:0"><div class="logo" style="margin-bottom:14px">◆ SHARD<b>LAB</b></div>
-        <div class="store" style="margin:0 auto 12px;width:64px;height:64px;font-size:30px;box-shadow:none;background:var(--brand-l)">☕</div>
-        <h3 style="font-size:17px;margin-bottom:4px"><span id="inviter"></span> invited you</h3>
-        <p class="muted" style="margin-bottom:18px">Kopi Kaki Café · Table 12 · Group order</p>
-        <div class="field"><input id="guestName" placeholder="Your name" maxlength="20"></div>
-        <div class="err" id="guestErr"></div>
-        <button class="btn" id="joinBtn">Join group</button>
-        <p class="muted" style="margin-top:12px">Your name is shown to everyone in the group.</p></div>
-    </div>
-  </section>
-
   <!-- VOTE -->
   <section class="screen" id="s-vote">
     <div class="hdr"><button class="back" data-go="cart">‹</button><h2>Who's paying?</h2></div>
@@ -325,8 +302,6 @@ input{font:inherit;color:inherit}
 
   <div class="mask" id="mask"></div>
   <div class="sheet" id="sheet"><div class="grab"></div><div class="body" id="sheetBody"></div></div>
-  <button class="fab" id="protoFab" aria-label="Prototype controls">🧪</button>
-  <div class="pp" id="protoPanel"></div>
   <div class="toast" id="toast"></div>
 </div>
 </div>
@@ -375,7 +350,7 @@ const BANKS=["Maybank2u","CIMB Clicks","Public Bank","RHB Now","Hong Leong","AmB
 const CB_RATE=0.03, MIN_GROUP=3, MAX_GROUP=12;
 const NAMES=["Aisha","Wei Jie","Priya","Hafiz","Mei Ling","Raj","Siti","Daniel","Kavitha","Jun Hao","Nurul","Arjun"];
 const COLORS=["#6C3DF4","#E8590C","#0CA678","#D6336C","#1C7ED6","#F59F00","#7048E8","#099268"];
-const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"mostly",people:[],vote:null,phone:"",name:"",code:null};
+const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,people:[],vote:null,phone:"",name:"",code:null};
 let cartSeq=0,pid=0,voteTimers=[];
 const r2=n=>Math.round(n*100)/100;
 /* ShardLab accounts: keyed by mobile number, persisted in this browser */
@@ -390,7 +365,7 @@ const hostName=()=>(S.people.find(p=>p.host)||{name:S.hostName||"Someone"}).name
 const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
 
 /* nav */
-function go(id){protoVis(id);if(id==="checkout"&&!$("#phone").value){$("#phone").value="12 345 6789";S.phone="+60123456789"}$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
+function go(id){if(id==="checkout"){const inp=$("#phone");if(!inp.value)inp.value=fmtPh("123456789");const d=inp.value.replace(/\D/g,"");S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:""}$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
   ({menu:renderMenu,cart:renderCart,checkout:renderCheckout,pay:renderPay,lobby:renderLobby,vote:renderVote,profile:renderProfile})[id]?.();}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
 function openSheet(h){$("#sheetBody").innerHTML=h;$("#mask").classList.add("on");$("#sheet").classList.add("on")}
@@ -659,25 +634,6 @@ function openShare(){
   $("#shCp").onclick=async()=>{closeSheet();toast(await copyText(inviteLink())?"Invite link copied":"Copy: "+inviteLink())};
 }
 
-/* ---------- Prototype controls (floating) ---------- */
-function addFriend(){if(S.people.length>=MAX_GROUP)return;const used=S.people.map(p=>p.name);const nm=NAMES.find(x=>!used.includes(x))||"Guest"+(S.people.length+1);addPerson(nm);toast(nm+" joined the group")}
-function previewJoin(){$("#inviter").textContent=hostName();$("#guestName").value="";$("#guestErr").style.display="none";go("join")}
-function protoVis(id){const on=id==="lobby"&&me()||id==="vote";$("#protoFab").classList.toggle("show",!!on);$("#protoPanel").classList.remove("on")}
-function renderProto(){
-  const onVote=$("#s-vote").classList.contains("on");
-  const again=()=>{if(onVote){startVote();renderVote()}else renderLobby();renderProto()};
-  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">How your friends vote</div>
-   ${[["mostly","Most friends decline (default)"],["all","Everyone volunteers"],["one","One friend volunteers"],["none","Nobody volunteers"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
-   <div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>
-   <div class="sub" style="margin-top:4px">You choose for yourself, and win draws. Changes restart the vote.</div>`;
-  $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;onVote?again():renderProto()});
-  $("#pAdd").onclick=()=>{addFriend();again()};
-  $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();again()};
-  $("#pPrev").onclick=()=>{$("#protoPanel").classList.remove("on");previewJoin()};
-}
-$("#protoFab").onclick=e=>{e.stopPropagation();const p=$("#protoPanel");if(p.classList.toggle("on"))renderProto()};
-document.addEventListener("click",e=>{const p=e.composedPath();if(!p.includes($("#protoPanel"))&&!p.includes($("#protoFab")))$("#protoPanel").classList.remove("on")});
-
 /* other members join by themselves 2 seconds after the group opens */
 function stopAutoJoin(){clearTimeout(S.joinTimer);S.joining=false}
 function scheduleAutoJoin(asGuest){stopAutoJoin();const tok=S.code;S.joining=true;
@@ -705,13 +661,13 @@ function renderLobby(){
     $("#lobbyFoot").innerHTML=`<button class="btn" id="setupGo">Continue</button>`;
     $("#setupGo").onclick=()=>{
       if(mode==="create"){const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
-        S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true,true);S.name=v;scheduleAutoJoin(false);renderLobby();protoVis("lobby")}
+        S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true,true);S.name=v;scheduleAutoJoin(false);renderLobby()}
       else{const code=$("#joinCode").value.trim().toUpperCase(),v=$("#joinName").value.trim(),e=$("#joinErr");
         if(!/^KK-\d{4}$/.test(code)){e.textContent="Enter a valid group code, like KK-4821";e.style.display="block";return}
         if(!v){e.textContent="Please enter your name to join";e.style.display="block";return}
         const pool=NAMES.filter(x=>x.toLowerCase()!==v.toLowerCase());
         S.code=code;S.name=v;S.hostName=pool[0];addPerson(v,true,false);scheduleAutoJoin(true);
-        renderLobby();protoVis("lobby");toast("You joined "+pool[0]+"'s group")}};
+        renderLobby();toast("You joined "+pool[0]+"'s group")}};
     return}
   const need=Math.max(0,MIN_GROUP-n);
   $("#lobbyBody").innerHTML=`<div class="card"><h3>Invite friends</h3><div class="code">${S.code}</div>
@@ -722,18 +678,12 @@ function renderLobby(){
   $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:"Continue"}</button>`;
   $("#lobbyGo").onclick=()=>go("menu");
 }
-$("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr");
-  if(!v){e.textContent="Please enter your name to join";e.style.display="block";return}
-  if(S.people.some(p=>p.name.toLowerCase()===v.toLowerCase())){e.textContent="That name is taken — add an initial";e.style.display="block";return}
-  addPerson(v);go("lobby");toast(v+" joined the group")};
 
 function clearVote(){voteTimers.forEach(clearTimeout);voteTimers=[]}
 function startVote(){clearVote();S.people.forEach(p=>p.vote=null);S.vote={phase:"voting"};
-  /* the user's own vote starts unselected; the scenario only decides how friends respond */
+  /* most friends decline: 0 or 1 volunteer, never more than half; the user's own vote starts unselected */
   const others=S.people.filter(p=>!p.me),shuffled=[...others].sort(()=>Math.random()-.5),yes=new Set();
-  if(S.demo==="all")others.forEach(p=>yes.add(p));
-  else if(S.demo==="one")yes.add(shuffled[0]);
-  else if(S.demo==="mostly")shuffled.slice(0,Math.min(Math.floor(others.length/2),Math.random()<.5?0:1)).forEach(p=>yes.add(p));
+  shuffled.slice(0,Math.min(Math.floor(others.length/2),Math.random()<.5?0:1)).forEach(p=>yes.add(p));
   others.forEach((p,i)=>voteTimers.push(setTimeout(()=>{
     p.vote=yes.has(p)?"yes":"no";
     if($("#s-vote").classList.contains("on"))renderVote();checkVote()},1300+i*1000+Math.random()*500)))}
@@ -763,7 +713,7 @@ function renderVote(){
   if(v.phase!=="drawing"||true)h+=`<div class="card"><h3>Everyone (${S.people.length}) · ${rm(t.total)} bill</h3>${S.people.map(p=>{
     const c=v.phase==="done"&&p.id===v.payerId?`<span class="chip pay">💳 Paying</span>`:p.vote==="yes"?`<span class="chip yes">🙋 Volunteered</span>`:p.vote==="no"?`<span class="chip">Not me</span>`:`<span class="chip wait">Deciding…</span>`;
     return `<div class="prow">${avatar(p)}<div class="nm">${p.name}${p.me?` <small>You</small>`:""}</div>${c}</div>`}).join("")}</div>`;
-  $("#voteBody").innerHTML=h;$("#voteFoot").style.display=foot?"block":"none";
+  $("#voteBody").innerHTML=h;$("#voteFoot").style.display=foot?"block":"none";if(!foot)$("#voteFoot").innerHTML="";
   const q=id=>document.getElementById(id);
   if(q("vYes"))q("vYes").onclick=()=>{m.vote="yes";renderVote();checkVote()};
   if(q("vNo"))q("vNo").onclick=()=>{m.vote="no";renderVote();checkVote()};
@@ -777,16 +727,17 @@ function toWait(w){$("#waitAv").innerHTML=avatar(w,"lg");$("#waitT").textContent
     renderDone();go("done");startProgress(no)},3500)}
 
 /* ---------- Profile ---------- */
-function renderProfile(){
+function profileResult(){
   const a=ACC[S.phone];
-  $("#profBody").innerHTML=`<div class="card"><h3>Your mobile number</h3><div class="field"><span class="pre">🇲🇾 +60</span><input id="pPhone" type="tel" inputmode="numeric" maxlength="12" placeholder="12 345 6789" value="${fmtPh(S.phone.slice(3))}"></div>
-    <button class="btn" id="pLook">View my cashback</button></div>`+
-   (a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Use it on your next visit — switch it on at checkout.</span></div>
+  return a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Use it on your next visit — switch it on at checkout.</span></div>
     <div class="card"><h3>Activity</h3>${a.hist.length?a.hist.map(h=>`<div class="prow"><div class="nm" style="font-weight:600;font-size:14px">${h.note}<small>${new Date(h.t).toLocaleDateString("en-MY")}</small></div><b style="color:${h.amt>=0?"var(--green)":"var(--ink)"}">${h.amt>=0?"+":"−"} ${rm(Math.abs(h.amt))}</b></div>`).join(""):`<div class="muted">No activity yet</div>`}</div>`
    :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 3% cashback — your profile is created automatically.</div></div>`
-   :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 3% on the whole bill.</div></div>`);
-  $("#pPhone").oninput=e=>e.target.value=fmtPh(e.target.value);
-  $("#pLook").onclick=()=>{const d=$("#pPhone").value.replace(/\D/g,"");if(!/^1\d{8,9}$/.test(d))return toast("Enter a valid mobile number");S.phone="+60"+d;S.useCb=false;renderProfile()};
+   :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 3% on the whole bill.</div></div>`}
+function renderProfile(){
+  if(!S.phone)S.phone="+60123456789"; /* default mock number, same as checkout */
+  $("#profBody").innerHTML=`<div class="card"><h3>Your mobile number</h3><div class="field" style="margin:0"><span class="pre">🇲🇾 +60</span><input id="pPhone" type="tel" inputmode="numeric" maxlength="12" placeholder="12 345 6789" value="${fmtPh(S.phone.slice(3))}"></div></div><div id="profRes">${profileResult()}</div>`;
+  $("#pPhone").oninput=e=>{e.target.value=fmtPh(e.target.value);const d=e.target.value.replace(/\D/g,"");
+    S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:"";S.useCb=false;$("#profRes").innerHTML=profileResult()};
 }
 renderMenu();
 </script>
