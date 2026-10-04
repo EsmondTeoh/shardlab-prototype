@@ -21,7 +21,7 @@ input{font:inherit;color:inherit}
 .sbar .ic{display:flex;gap:5px;align-items:center}
 .tbar{height:52px;flex:none;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;background:#fff;border-bottom:1px solid #E8EAED}
 .url{flex:1;min-width:0;height:38px;border-radius:19px;background:#F1F3F4;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:14px;color:#202124;overflow:hidden;white-space:nowrap}
-.url span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.url span{overflow:hidden;text-overflow:ellipsis;min-width:0}.url b{font-weight:600}.url i{font-style:normal;color:#5F6368}
 .tbtn{width:38px;height:38px;flex:none;display:grid;place-items:center;color:#3C4043}
 .tabn{width:22px;height:22px;border:2px solid #3C4043;border-radius:6px;font-size:12px;font-weight:700;display:grid;place-items:center;line-height:1}
 #app{position:relative;flex:1;min-height:0;width:100%;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
@@ -184,7 +184,7 @@ input{font:inherit;color:inherit}
     <svg width="16" height="12" viewBox="0 0 16 12" fill="#202124"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="4.3" y="5.5" width="3" height="6.5" rx="1"/><rect x="8.6" y="3" width="3" height="9" rx="1"/><rect x="12.9" y="0" width="3" height="12" rx="1"/></svg>
     <svg width="24" height="12" viewBox="0 0 24 12"><rect x=".5" y=".5" width="20" height="11" rx="3" fill="none" stroke="#202124"/><rect x="2" y="2" width="14" height="8" rx="1.5" fill="#202124"/><rect x="21.5" y="4" width="2" height="4" rx="1" fill="#202124"/></svg></span></div>
   <div class="tbar">
-    <div class="url"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5F6368" stroke-width="2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.4" fill="#fff"/><circle cx="15" cy="16" r="2.4" fill="#fff"/></svg><span>esmondteoh.github.io</span></div>
+    <div class="url"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5 22.5 12 12 22.5 1.5 12Z" fill="#6C3DF4"/><path d="M12 6.5 17.5 12 12 17.5 6.5 12Z" fill="#C8F23D"/></svg><span><b>shardlab.my</b><i>/kopi-kaki-cafe</i></span></div>
     <div class="tbtn"><div class="tabn">1</div></div>
     <div class="tbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#3C4043"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></div>
   </div>
@@ -375,7 +375,7 @@ const BANKS=["Maybank2u","CIMB Clicks","Public Bank","RHB Now","Hong Leong","AmB
 const CB_RATE=0.03, MIN_GROUP=3, MAX_GROUP=12;
 const NAMES=["Aisha","Wei Jie","Priya","Hafiz","Mei Ling","Raj","Siti","Daniel","Kavitha","Jun Hao","Nurul","Arjun"];
 const COLORS=["#6C3DF4","#E8590C","#0CA678","#D6336C","#1C7ED6","#F59F00","#7048E8","#099268"];
-const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"mixed",people:[],vote:null,phone:"",name:"",code:null};
+const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"me",people:[],vote:null,phone:"",name:"",code:null};
 let cartSeq=0,pid=0,voteTimers=[];
 const r2=n=>Math.round(n*100)/100;
 /* ShardLab accounts: keyed by mobile number, persisted in this browser */
@@ -666,10 +666,10 @@ function protoVis(id){const on=id==="lobby"&&me()||id==="vote";$("#protoFab").cl
 function renderProto(){
   const onVote=$("#s-vote").classList.contains("on");
   const again=()=>{if(onVote){startVote();renderVote()}else renderLobby();renderProto()};
-  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">When voting on who pays, friends…</div>
-   ${[["mixed","Respond randomly"],["all","All volunteer"],["one","One friend volunteers"],["none","None volunteer"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
+  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">Scenario for who pays</div>
+   ${[["me","I'm the payer (default)"],["mixed","Friends respond randomly"],["all","Everyone volunteers"],["one","A friend pays instead"],["none","Nobody volunteers"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
    <div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>
-   ${onVote?`<div class="sub" style="margin-top:4px">Changes restart the vote.</div>`:""}`;
+   <div class="sub" style="margin-top:4px">You are the default payer, including in draws. Changes restart the vote.</div>`;
   $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;onVote?again():renderProto()});
   $("#pAdd").onclick=()=>{addFriend();again()};
   $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();again()};
@@ -718,9 +718,11 @@ $("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr")
 
 function clearVote(){voteTimers.forEach(clearTimeout);voteTimers=[]}
 function startVote(){clearVote();S.people.forEach(p=>p.vote=null);S.vote={phase:"voting"};
+  /* the person using the prototype is the default payer: their vote starts as "I'll pay" unless the scenario says otherwise */
+  me().vote=(S.demo==="one"||S.demo==="none")?"no":"yes";
   const others=S.people.filter(p=>!p.me),pick=others[Math.floor(Math.random()*others.length)];
   others.forEach((p,i)=>voteTimers.push(setTimeout(()=>{
-    p.vote=S.demo==="all"?"yes":S.demo==="none"?"no":S.demo==="one"?(p===pick?"yes":"no"):(Math.random()<.4?"yes":"no");
+    p.vote=S.demo==="all"?"yes":S.demo==="one"?(p===pick?"yes":"no"):S.demo==="mixed"?(Math.random()<.4?"yes":"no"):"no";
     if($("#s-vote").classList.contains("on"))renderVote();checkVote()},1300+i*1000+Math.random()*500)))}
 function checkVote(){if(!S.vote||S.vote.phase!=="voting"||!S.people.every(p=>p.vote))return;
   const v=S.people.filter(p=>p.vote==="yes");
@@ -729,7 +731,7 @@ function checkVote(){if(!S.vote||S.vote.phase!=="voting"||!S.people.every(p=>p.v
   else draw(v,{all:v.length===S.people.length})}
 function draw(pool,info){S.vote={phase:"drawing"};renderVote();
   const iv=setInterval(()=>{const el=$("#rolling");if(el)el.textContent=pool[Math.floor(Math.random()*pool.length)].name},100);
-  setTimeout(()=>{clearInterval(iv);const w=pool[Math.floor(Math.random()*pool.length)];S.vote={phase:"done",payerId:w.id,random:true,n:pool.length,...info};renderVote()},2400)}
+  setTimeout(()=>{clearInterval(iv);const w=pool.find(p=>p.me)||pool[Math.floor(Math.random()*pool.length)]; /* demo: the prototype user wins draws by default */S.vote={phase:"done",payerId:w.id,random:true,n:pool.length,...info};renderVote()},2400)}
 function renderVote(){
   const v=S.vote||{phase:"voting"},t=totals(),cbAmt=rm(r2(t.total*CB_RATE)),m=me();
   let h="",foot=false;

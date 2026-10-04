@@ -16,9 +16,7 @@
 2. Either **Create a group** (enter your name) or **Join a group** (enter a code like `KK-4821` and your name) → **Continue**.
 3. Tap the floating 🧪 button on the right and choose **+ 3 friends join** (or **Preview guest join screen** to see the name-entry step). Try the **Share** button for WhatsApp, Slack and Copy.
 4. **Start ordering** → add an item → open the cart → **Lock order & choose payer**.
-5. Tap **I'll pay**.
-   - Set the floating controls to **All volunteer** to see the random draw.
-   - Set them to **None volunteer** to see you as the sole payer.
+5. The vote opens with **I'll pay** already selected and your friends declining, so you are the payer by default. Use the floating 🧪 controls to try other scenarios: **Friends respond randomly**, **Everyone volunteers** (draw), **A friend pays instead** (you decline and a friend pays) and **Nobody volunteers**.
 6. **Continue to payment** → enter a mobile number such as `12 345 6789` → pay with any method → use the "Simulate" buttons.
 7. See the **cashback earned** card, then tap **Order again**.
 8. Repeat with the same mobile number. Checkout now offers **Use ShardLab cashback**. The 👤 Profile button on the landing page shows the balance and history.
@@ -45,13 +43,14 @@
 - Cashback: 3% of the bill total credited to the payer's profile and redeemable at the next checkout on the same mobile number. Redemption can partly or fully cover a bill.
 
 **Simulated**
-- **Other group members:** there is no backend or real multi-device sync. Friends are generated in the page and "vote" on timers. The floating Prototype controls steer their behaviour (random, all volunteer, one friend volunteers, none volunteer) and can add friends. The same list is available on the Who's paying page, where changes restart the vote.
+- **Other group members:** there is no backend or real multi-device sync. Friends are generated in the page and "vote" on timers. The floating Prototype controls steer their behaviour (I'm the payer (default), friends respond randomly, everyone volunteers, a friend pays instead, nobody volunteers) and can add friends. The same list is available on the Who's paying page, where changes restart the vote.
 - **Payments:** FPX, TNG, GrabPay, Boost, card and DuitNow are mock screens with "simulate approve/fail" buttons. The card form accepts any value except the decline test card `4000 0000 0000 0002`. The DuitNow QR is decorative and not scannable.
 - **Account and cashback:** stored in `localStorage` per browser, keyed by mobile number. There is no login or OTP. A different browser or device shows no balance.
 - **Kitchen status:** the Paid → Preparing → Ready tracker advances on timers.
 - **Invite link:** `shardlab.my/g/...` is a placeholder domain. Sharing the message works, but the link does not join a real group.
 - **Messaging and e-Invoice:** the "sent via WhatsApp" line and the MyInvois e-Invoice request form are UI only.
-- **Chrome frame:** the status bar, address bar, tab counter and menu are a static mock-up, not a real browser.
+- **Chrome frame:** the status bar, address bar (branded `shardlab.my/kopi-kaki-cafe`), tab counter and menu are a static mock-up, not a real browser. The address is not the real hosting URL.
+- **Draws:** the prototype user is the default payer, including in the "random" draw, which always lands on you when you are in the pool. A friend is picked only in the "A friend pays instead" scenario. A real product would pick truly at random.
 - **Menu, store and prices:** invented ("Kopi Kaki Café").
 
 **Incomplete or unverified**
