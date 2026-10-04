@@ -16,7 +16,7 @@
 2. Either **Create a group** (enter your name) or **Join a group** (enter a code like `KK-4821` and your name) → **Continue**.
 3. Wait about 2 seconds: the other members join by themselves, and **Continue** unlocks once the group has 3 people. Try the **Share** button for WhatsApp, Slack and Copy.
 4. **Start ordering** → add an item → open the cart → **Lock order & choose payer**.
-5. On **Who's paying?** nothing is pre-selected and nothing happens until you choose **I'll pay** or **Not me**. Most friends decline, and occasionally one volunteers. Run the vote a few times to see each outcome:
+5. On **Who's paying?** you are asked "Will you pay this bill?" with two large buttons (a filled **I'll pay** and an outlined **Not me**); nothing is pre-selected and nothing happens until you choose. Most friends decline, and occasionally one volunteers. Run the vote a few times to see each outcome:
    - **I'll pay** → you are the payer (if a friend also volunteered, a short draw runs and lands on you).
    - **Not me** while a friend volunteered → that friend pays and you get a "paid by" confirmation.
    - **Not me** while nobody volunteered → the "Nobody volunteered" fallback.
@@ -47,7 +47,7 @@
 **Simulated**
 - **Other group members:** there is no backend or real multi-device sync. Friends are generated in the page, join on their own 2 seconds after the group opens, and "vote" on timers. Most decline; at most half ever volunteer.
 - **Payments:** FPX, TNG, GrabPay, Boost, card and DuitNow are mock screens with "simulate approve/fail" buttons. The card form accepts any value except the decline test card `4000 0000 0000 0002`. The DuitNow QR is decorative and not scannable.
-- **Account and cashback:** stored in `localStorage` per browser, keyed by mobile number; the last number used is remembered so the next visit recognises you. There is no login or OTP. A different browser or device shows no balance.
+- **Account and cashback:** stored in `localStorage` per browser, keyed by mobile number; the last number used is remembered so the next visit recognises you. There is no login or OTP. A different browser or device shows no balance. A brand-new browser has no cashback, so a first payment never offers any. Balances from earlier test runs persist in the same browser, so to start clean use a private window or clear the site's data.
 - **Kitchen status:** the Paid → Preparing → Ready tracker advances on timers.
 - **Invite link:** `shardlab.my/g/...` is a placeholder domain. Sharing the message works, but the link does not join a real group.
 - **Messaging and e-Invoice:** the "sent via WhatsApp" line and the MyInvois e-Invoice request form are UI only.
