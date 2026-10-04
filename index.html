@@ -109,6 +109,7 @@ input{font:inherit;color:inherit}
 .pm{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:14px;margin-bottom:10px;width:100%;text-align:left;background:#fff}
 .pm.sel{border-color:var(--brand);background:var(--brand-l)}
 .pm .lg{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex:none}
+.pm>div:nth-child(2){min-width:0}
 .pm b{font-size:15px;display:block}.pm span{font-size:12px;color:var(--ink2)}
 .radio{margin-left:auto;width:20px;height:20px;border-radius:50%;border:2px solid #ccc;flex:none}
 .pm.sel .radio{border:6px solid var(--brand)}
@@ -357,6 +358,10 @@ const r2=n=>Math.round(n*100)/100;
 const AK="shardlab_accounts";
 let ACC=(()=>{try{return JSON.parse(localStorage.getItem(AK))||{}}catch(e){return{}}})();
 const persist=()=>{try{localStorage.setItem(AK,JSON.stringify(ACC))}catch(e){}};
+const LK="shardlab_last_phone";
+let LASTPH=(()=>{try{return localStorage.getItem(LK)||""}catch(e){return""}})();
+const rememberPhone=p=>{LASTPH=p;try{localStorage.setItem(LK,p)}catch(e){}};
+const startPhone=()=>LASTPH||"+60123456789"; /* last number used, else the demo number */
 const cbBal=()=>(ACC[S.phone]&&ACC[S.phone].cb)||0;
 function credit(phone,name,amt,note){const a=ACC[phone]||(ACC[phone]={name,cb:0,hist:[]});if(name)a.name=name;a.cb=r2(a.cb+amt);a.hist.unshift({t:Date.now(),amt:r2(amt),note});persist()}
 const fmtPh=v=>{v=v.replace(/\D/g,"");return v.length>3?v.slice(0,2)+" "+v.slice(2,6)+(v.length>6?" "+v.slice(6,10):""):v};
@@ -365,7 +370,7 @@ const hostName=()=>(S.people.find(p=>p.host)||{name:S.hostName||"Someone"}).name
 const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
 
 /* nav */
-function go(id){if(id==="checkout"){const inp=$("#phone");if(!inp.value)inp.value=fmtPh("123456789");const d=inp.value.replace(/\D/g,"");S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:""}$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
+function go(id){if(id==="checkout"){const inp=$("#phone");if(!inp.value)inp.value=fmtPh(startPhone().slice(3));const d=inp.value.replace(/\D/g,"");S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:""}$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
   ({menu:renderMenu,cart:renderCart,checkout:renderCheckout,pay:renderPay,lobby:renderLobby,vote:renderVote,profile:renderProfile})[id]?.();}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
 function openSheet(h){$("#sheetBody").innerHTML=h;$("#mask").classList.add("on");$("#sheet").classList.add("on")}
@@ -468,10 +473,13 @@ function renderCheckout(){
     $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (3%) cashback in your ShardLab profile once paid.</div></div>`}
   else $("#grpCk").innerHTML="";
   const bal=cbBal();
-  $("#cbCard").innerHTML=!S.phone?`<div class="card"><div class="muted">💜 Enter your mobile number above to use your ShardLab cashback on this order.</div></div>`
-   :bal>0?`<div class="card"><div class="einv"><div style="flex:1"><b style="font-size:14px">Use ShardLab cashback</b><div class="muted">Balance ${rm(bal)} · applies up to the bill total</div></div><button class="sw ${S.useCb?"on":""}" id="cbSw" aria-label="toggle cashback"></button></div></div>`
+  const applied=r2(Math.min(bal,t.total)),earn=r2(t.total*CB_RATE);
+  $("#cbCard").innerHTML=!S.phone?`<div class="card"><div class="muted">💜 Enter your mobile number above to use or save your ShardLab cashback.</div></div>`
+   :bal>0?`<div class="card"><h3>ShardLab cashback <span class="pill" style="margin-left:6px">Balance ${rm(bal)}</span></h3>${g?`<div class="muted" style="margin:-4px 0 10px">You earn ${rm(earn)} cashback on this order either way.</div>`:""}
+     <button class="pm ${S.useCb?"sel":""}" data-cb="1"><div class="lg" style="background:var(--brand);font-size:18px">💜</div><div><b>Use my cashback</b><span>Take ${rm(applied)} off this order · ${rm(r2(bal-applied))} stays in your profile</span></div><div class="radio"></div></button>
+     <button class="pm ${S.useCb?"":"sel"}" data-cb="0" style="margin-bottom:0"><div class="lg" style="background:var(--ink);font-size:18px">🏦</div><div><b>Keep saving</b><span>Keep ${rm(bal)} for a later visit</span></div><div class="radio"></div></button></div>`
    :`<div class="card"><div class="muted">💜 No cashback yet for ${S.phone}. Volunteer to pay on a group order to earn 3%.</div></div>`;
-  const sw=$("#cbSw");if(sw)sw.onclick=()=>{S.useCb=!S.useCb;renderCheckout()};
+  $$("#cbCard [data-cb]").forEach(b=>b.onclick=()=>{S.useCb=b.dataset.cb==="1";renderCheckout()});
   $("#sum").innerHTML=sumHTML();
 }
 $("#phone").oninput=e=>{e.target.value=fmtPh(e.target.value);$("#phoneErr").style.display="none";
@@ -482,7 +490,7 @@ $("#promoBtn").onclick=()=>{const v=$("#promo").value.trim().toUpperCase();
 $("#toPay").onclick=()=>{
   const d=$("#phone").value.replace(/\D/g,"");
   if(!/^1\d{8,9}$/.test(d)){$("#phoneErr").style.display="block";$("#phone").focus();return}
-  S.phone="+60"+d;S.name=$("#name").value.trim()||(S.isGroup?me().name:"Guest");go("pay")};
+  S.phone="+60"+d;rememberPhone(S.phone);S.name=$("#name").value.trim()||(S.isGroup?me().name:"Guest");go("pay")};
 
 /* payment select */
 function payLabel(t){const m=S.pay==="cashback"?"ShardLab cashback":S.pay==="fpx"?"FPX · "+S.bank:PAY.find(p=>p.id===S.pay).n;return t.cb&&S.pay!=="cashback"?m+" + cashback":m}
@@ -492,7 +500,7 @@ function renderPay(){
   $("#payAmt").textContent=rm(t.pay);
   $("#pmList").innerHTML=free?`<div class="cb" style="margin:0"><span class="big">💜</span><div><b>Fully covered by your ShardLab cashback.</b><br>No payment needed — confirm to place your order.</div></div>`
    :(t.cb?`<div class="muted" style="margin-bottom:10px">ShardLab cashback of ${rm(t.cb)} applied · pay the remaining ${rm(t.pay)}</div>`:"")+PAY.map(p=>`<button class="pm ${S.pay===p.id?"sel":""}" data-p="${p.id}"><div class="lg" style="background:${p.c}">${p.l}</div><div><b>${p.n}</b><span>${p.s}</span></div><div class="radio"></div></button>`).join("");
-  $$(".pm").forEach(b=>b.onclick=()=>{S.pay=b.dataset.p;if(S.pay!=="fpx")S.bank=null;renderPay()});
+  $$("#pmList .pm").forEach(b=>b.onclick=()=>{S.pay=b.dataset.p;if(S.pay!=="fpx")S.bank=null;renderPay()});
   $("#bankWrap").style.display=!free&&S.pay==="fpx"?"block":"none";
   $("#banks").innerHTML=BANKS.map(b=>`<button class="bank ${S.bank===b?"sel":""}" data-b="${b}">${b}</button>`).join("");
   $$(".bank").forEach(b=>b.onclick=()=>{S.bank=b.dataset.b;renderPay()});
@@ -734,7 +742,7 @@ function profileResult(){
    :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 3% cashback — your profile is created automatically.</div></div>`
    :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 3% on the whole bill.</div></div>`}
 function renderProfile(){
-  if(!S.phone)S.phone="+60123456789"; /* default mock number, same as checkout */
+  if(!S.phone)S.phone=startPhone(); /* same source as checkout */
   $("#profBody").innerHTML=`<div class="card"><h3>Your mobile number</h3><div class="field" style="margin:0"><span class="pre">🇲🇾 +60</span><input id="pPhone" type="tel" inputmode="numeric" maxlength="12" placeholder="12 345 6789" value="${fmtPh(S.phone.slice(3))}"></div></div><div id="profRes">${profileResult()}</div>`;
   $("#pPhone").oninput=e=>{e.target.value=fmtPh(e.target.value);const d=e.target.value.replace(/\D/g,"");
     S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:"";S.useCb=false;$("#profRes").innerHTML=profileResult()};
