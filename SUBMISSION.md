@@ -10,10 +10,10 @@
 ### Suggested walkthrough (about 2 minutes)
 1. Landing → choose **Group order** → **Create group order**.
 2. Enter a name → **Create group**.
-3. In the **Prototype controls** panel, tap **+ 3 friends join** (or **Preview guest join screen** to see the name-entry step).
+3. Tap the floating 🧪 button on the right and choose **+ 3 friends join** (or **Preview guest join screen** to see the name-entry step). Try the **Share** button for WhatsApp, Slack and Copy.
 4. **Start ordering** → add an item → open the cart → **Lock order & choose payer**.
 5. Tap **I'll pay**.
-   - Set the controls to **All volunteer** to see the random draw.
+   - Set the floating controls to **All volunteer** to see the random draw.
    - Set them to **None volunteer** to see you as the sole payer.
 6. **Continue to payment** → enter a mobile number such as `12 345 6789` → pay with any method → use the "Simulate" buttons.
 7. See the **cashback earned** card, then tap **Order again**.
@@ -35,6 +35,8 @@
   - Volunteer vote with live status visible to everyone.
   - Random pick when several volunteer, and a fallback when nobody does.
   - Payer and non-payer paths.
+- Invite sharing from the group lobby: **WhatsApp** opens a real `wa.me` link with the invite prefilled. **Slack** uses the phone's native share sheet when available. Otherwise it copies the invite and opens Slack, because a plain web page cannot post into Slack. **Copy link** also works.
+- Prototype controls live in a floating, collapsible button on the right edge of the group and vote screens.
 - Cashback: 5% of the bill total credited to the payer's profile and redeemable at the next checkout on the same mobile number. Redemption can partly or fully cover a bill.
 
 **Simulated**
@@ -42,6 +44,7 @@
 - **Payments:** FPX, TNG, GrabPay, Boost, card and DuitNow are mock screens with "simulate approve/fail" buttons. The card form accepts any value except the decline test card `4000 0000 0000 0002`. The DuitNow QR is decorative and not scannable.
 - **Account and cashback:** stored in `localStorage` per browser, keyed by mobile number. There is no login or OTP. A different browser or device shows no balance.
 - **Kitchen status:** the Paid → Preparing → Ready tracker advances on timers.
+- **Invite link:** `shardlab.my/g/...` is a placeholder domain. Sharing the message works, but the link does not join a real group.
 - **Messaging and e-Invoice:** the "sent via WhatsApp" line and the MyInvois e-Invoice request form are UI only.
 - **Menu, store and prices:** invented ("Kopi Kaki Café").
 

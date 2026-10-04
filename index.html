@@ -147,12 +147,6 @@ input{font:inherit;color:inherit}
 @keyframes blink{50%{opacity:.4}}
 .cb{background:var(--lime);color:#1F1F1F;border-radius:var(--r);padding:14px 16px;margin:12px 16px 0;font-size:14px;display:flex;gap:12px;align-items:center}
 .cb b{font-weight:800}.cb .big{font-size:26px}
-.demo{background:#F4F1FF;border:1.5px dashed var(--brand);border-radius:var(--r);padding:14px;margin:12px 16px 0}
-.demo h3{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand-d);margin-bottom:10px}
-.demo .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.demo .chips button,.demo .mini{padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-size:12.5px;font-weight:600}
-.demo .chips button.on{border-color:var(--brand);background:var(--brand);color:#fff}
-.demo .mini{margin:0 6px 6px 0}
 .prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 6px}.prog i{display:block;height:100%;background:var(--brand);transition:.3s}
 .code{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:3px;color:var(--brand-d);text-align:center;padding:10px;background:var(--brand-l);border-radius:12px;margin-bottom:10px}
 .votebtns{display:grid;gap:10px;margin:16px 16px 0}
@@ -162,6 +156,14 @@ input{font:inherit;color:inherit}
 .gsec{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin:10px 0 2px}
 .gsec .av{width:26px;height:26px;font-size:12px}
 .rolling{font-size:30px;font-weight:800;color:var(--brand-d);height:44px;margin:6px 0}
+.fab{position:absolute;right:0;top:46%;z-index:9;width:40px;height:48px;border-radius:14px 0 0 14px;background:var(--ink);color:#fff;font-size:18px;display:none;place-items:center;box-shadow:-4px 4px 16px rgba(0,0,0,.25)}
+.fab.show{display:grid}
+.pp{position:absolute;right:48px;top:calc(46% - 70px);z-index:9;width:236px;background:#fff;border-radius:16px;padding:14px;box-shadow:0 12px 32px rgba(0,0,0,.28);display:none;border:1px solid var(--line)}
+.pp.on{display:block}
+.pp h3{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand-d);margin-bottom:8px}
+.pp .sub{font-size:12px;color:var(--ink2);margin:0 0 6px}
+.pp .opt2{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;font-weight:600;margin-bottom:6px;background:#fff}
+.pp .opt2.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d)}
 </style>
 </head>
 <body>
@@ -302,6 +304,8 @@ input{font:inherit;color:inherit}
 
   <div class="mask" id="mask"></div>
   <div class="sheet" id="sheet"><div class="grab"></div><div class="body" id="sheetBody"></div></div>
+  <button class="fab" id="protoFab" aria-label="Prototype controls">🧪</button>
+  <div class="pp" id="protoPanel"></div>
   <div class="toast" id="toast"></div>
 </div>
 
@@ -363,7 +367,7 @@ const me=()=>S.people.find(p=>p.me);
 const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
 
 /* nav */
-function go(id){$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
+function go(id){protoVis(id);$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
   ({menu:renderMenu,cart:renderCart,checkout:renderCheckout,pay:renderPay,lobby:renderLobby,vote:renderVote,profile:renderProfile})[id]?.();}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
 function openSheet(h){$("#sheetBody").innerHTML=h;$("#mask").classList.add("on");$("#sheet").classList.add("on")}
@@ -616,6 +620,40 @@ function renderDone(){
 function addPerson(name,isMe){const p={id:"p"+(++pid),name,me:!!isMe,vote:null};S.people.push(p);
   if(!isMe){const all=MENU.flatMap(c=>c.items);for(let i=0,n=1+Math.floor(Math.random()*2);i<n;i++){const it=all[Math.floor(Math.random()*all.length)];
     S.cart.push({uid:++cartSeq,id:it.id,n:it.n,e:it.e,c:it.c,desc:"Regular",price:it.p,qty:1,by:p.id})}}return p}
+/* ---------- Share ---------- */
+const inviteLink=()=>"https://shardlab.my/g/"+S.code.toLowerCase();
+const inviteMsg=(link=true)=>`${me().name} invited you to a group order at Kopi Kaki Café (Table 12). Join with code ${S.code}${link?": "+inviteLink():""}. Whoever pays earns 5% cashback on the bill.`;
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){return false}}
+function openShare(){
+  openSheet(`<h3 style="font-size:17px;margin-bottom:4px">Invite friends</h3><p class="muted" style="margin-bottom:14px">Friends join with their name — no account needed.</p>
+   <button class="pm" id="shWa"><div class="lg" style="background:#25D366">WA</div><div><b>WhatsApp</b><span>Opens WhatsApp with the invite ready to send</span></div></button>
+   <button class="pm" id="shSl"><div class="lg" style="background:#4A154B">Sl</div><div><b>Slack</b><span>${navigator.share?"Pick Slack from your share sheet":"Copies the invite, then opens Slack to paste"}</span></div></button>
+   <button class="pm" id="shCp"><div class="lg" style="background:var(--ink)">🔗</div><div><b>Copy link</b><span>${inviteLink()}</span></div></button>`);
+  $("#shWa").onclick=()=>{window.open("https://wa.me/?text="+encodeURIComponent(inviteMsg()),"_blank","noopener");closeSheet()};
+  $("#shSl").onclick=async()=>{closeSheet();
+    if(navigator.share){try{await navigator.share({title:"ShardLab group order",text:inviteMsg(false),url:inviteLink()})}catch(e){}}
+    else{const ok=await copyText(inviteMsg());toast(ok?"Invite copied — paste it in Slack":"Open Slack and paste the invite");window.open("https://app.slack.com/client","_blank","noopener")}};
+  $("#shCp").onclick=async()=>{closeSheet();toast(await copyText(inviteLink())?"Invite link copied":"Copy: "+inviteLink())};
+}
+
+/* ---------- Prototype controls (floating) ---------- */
+function addFriend(){if(S.people.length>=MAX_GROUP)return;const used=S.people.map(p=>p.name);const nm=NAMES.find(x=>!used.includes(x))||"Guest"+(S.people.length+1);addPerson(nm);toast(nm+" joined the group")}
+function previewJoin(){$("#inviter").textContent=me().name;$("#guestName").value="";$("#guestErr").style.display="none";go("join")}
+function protoVis(id){const on=id==="lobby"&&me()||id==="vote";$("#protoFab").classList.toggle("show",!!on);$("#protoPanel").classList.remove("on")}
+function renderProto(){
+  const lobby=$("#s-lobby").classList.contains("on");
+  $("#protoPanel").innerHTML=`<h3>Prototype controls</h3><div class="sub">When voting on who pays, friends…</div>
+   ${[["mixed","Respond randomly"],["all","All volunteer"],["none","None volunteer"]].map(([k,l])=>`<button class="opt2 ${S.demo===k?"on":""}" data-d="${k}">${l}</button>`).join("")}
+   ${lobby?`<div class="sub" style="margin-top:10px">Group</div><button class="opt2" id="pAdd">+ Friend joins</button><button class="opt2" id="pAdd3">+ 3 friends join</button><button class="opt2" id="pPrev">Preview guest join screen</button>`
+   :`<div class="sub" style="margin-top:6px">Applies the next time a vote starts.</div>`}`;
+  $$("#protoPanel [data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;renderProto()});
+  if(lobby){$("#pAdd").onclick=()=>{addFriend();renderLobby();renderProto()};
+    $("#pAdd3").onclick=()=>{for(let i=0;i<3;i++)addFriend();renderLobby();renderProto()};
+    $("#pPrev").onclick=()=>{$("#protoPanel").classList.remove("on");previewJoin()}}
+}
+$("#protoFab").onclick=e=>{e.stopPropagation();const p=$("#protoPanel");if(p.classList.toggle("on"))renderProto()};
+document.addEventListener("click",e=>{const p=e.composedPath();if(!p.includes($("#protoPanel"))&&!p.includes($("#protoFab")))$("#protoPanel").classList.remove("on")});
+
 function renderLobby(){
   const m=me(),n=S.people.length;
   if(!m){
@@ -624,22 +662,13 @@ function renderLobby(){
       <div class="card"><h3>How it works</h3>${["Invite 3 or more friends — each joins with their name","Everyone adds their own items to one shared order","Volunteer to pay. If several volunteer, one is picked at random","The payer earns 5% cashback in their ShardLab profile"].map((t,i)=>`<div class="prow"><div class="av" style="background:var(--brand-l);color:var(--brand-d)">${i+1}</div><div class="nm" style="font-weight:500;font-size:14px">${t}</div></div>`).join("")}</div>`;
     $("#lobbyFoot").innerHTML=`<button class="btn" id="mkGroup">Create group</button>`;
     $("#mkGroup").onclick=()=>{const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
-      S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true);S.name=v;renderLobby()};return}
+      S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true);S.name=v;renderLobby();protoVis("lobby")};return}
   const need=Math.max(0,MIN_GROUP-n);
   $("#lobbyBody").innerHTML=`<div class="card"><h3>Invite friends</h3><div class="code">${S.code}</div>
-     <div class="row"><span class="muted">shardlab.my/g/${S.code.toLowerCase()}</span><button id="copyBtn" style="color:var(--brand-d);font-weight:700">Copy link</button></div></div>
+     <div class="row"><span class="muted">shardlab.my/g/${S.code.toLowerCase()}</span><button id="shareBtn" style="background:var(--brand);color:#fff;font-weight:700;padding:8px 16px;border-radius:999px">↗ Share</button></div></div>
     <div class="card"><h3>In this group (${n}/${MAX_GROUP})</h3>${S.people.map(p=>`<div class="prow">${avatar(p)}<div class="nm">${p.name}${p.me?` <small>You · host</small>`:`<small>Joined</small>`}</div></div>`).join("")}
-      <div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>
-    <div class="demo"><h3>Prototype controls</h3>
-      <div class="muted" style="margin-bottom:8px">When voting on who pays, friends will…</div>
-      <div class="chips">${[["mixed","Respond randomly"],["all","All volunteer"],["none","None volunteer"]].map(([k,l])=>`<button data-d="${k}" class="${S.demo===k?"on":""}">${l}</button>`).join("")}</div>
-      <button class="mini" id="addFriend">+ Friend joins</button><button class="mini" id="addThree">+ 3 friends join</button><button class="mini" id="prevJoin">Preview guest join screen</button></div>`;
-  $$("[data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;renderLobby()});
-  const add=()=>{if(S.people.length>=MAX_GROUP)return;const used=S.people.map(p=>p.name);const nm=NAMES.find(x=>!used.includes(x))||"Guest"+(S.people.length+1);addPerson(nm);toast(nm+" joined the group")};
-  $("#addFriend").onclick=()=>{add();renderLobby()};
-  $("#addThree").onclick=()=>{for(let i=0;i<3;i++)add();renderLobby()};
-  $("#prevJoin").onclick=()=>{$("#inviter").textContent=m.name;$("#guestName").value="";$("#guestErr").style.display="none";go("join")};
-  $("#copyBtn").onclick=()=>{try{navigator.clipboard.writeText("https://shardlab.my/g/"+S.code.toLowerCase())}catch(e){}toast("Invite link copied")};
+      <div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>`;
+  $("#shareBtn").onclick=openShare;
   $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:`Start ordering · ${n} people`}</button>`;
   $("#lobbyGo").onclick=()=>go("menu");
 }
