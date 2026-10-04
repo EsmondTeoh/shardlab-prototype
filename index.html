@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ShardLab – Mobile Ordering &amp; Pay</title>
+<style>
+:root{
+  --brand:#6C3DF4; --brand-d:#5628D6; --brand-l:#F0EAFF; --lime:#C8F23D;
+  --ink:#1F1F1F; --ink2:#6B6B6B; --line:#EBEBEB; --bg:#FAFAF8; --card:#fff;
+  --green:#12A150; --red:#D93025; --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:#e9e7e2;display:flex;justify-content:center;align-items:center}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input{font:inherit;color:inherit}
+#app{position:relative;width:100%;max-width:430px;height:100dvh;max-height:900px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+@media(min-width:500px){#app{border-radius:32px;box-shadow:0 20px 60px rgba(0,0,0,.2);height:min(860px,96dvh)}}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg);animation:in .25s ease}
+.screen.on{display:flex}
+@keyframes in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.scroll{flex:1;overflow-y:auto;padding-bottom:24px}
+.hdr{display:flex;align-items:center;gap:10px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line);position:relative;z-index:2}
+.hdr h2{font-size:17px;font-weight:700;flex:1}
+.back{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:20px;background:var(--bg)}
+.logo{font-weight:800;letter-spacing:.5px;font-size:15px}
+.logo b{color:var(--brand)}
+.btn{display:block;width:100%;padding:15px;border-radius:999px;background:var(--brand);color:#fff;font-weight:700;font-size:16px;text-align:center}
+.btn:active{background:var(--brand-d)}
+.btn[disabled]{background:#ddd;color:#999;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+.foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line)}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin:12px 16px 0;border:1px solid var(--line)}
+.card h3{font-size:14px;font-weight:700;margin-bottom:12px}
+.muted{color:var(--ink2);font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;padding:5px 0}
+.row.total{font-weight:800;font-size:17px;border-top:1px dashed var(--line);margin-top:6px;padding-top:12px}
+.pill{display:inline-block;background:var(--brand-l);color:var(--brand-d);font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+
+/* Landing */
+.hero{background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff;padding:28px 20px 70px;text-align:center}
+.hero .logo{color:#fff;font-size:18px}.hero .logo b{color:var(--lime)}
+.store{width:84px;height:84px;border-radius:24px;background:#fff;margin:22px auto 12px;display:grid;place-items:center;font-size:42px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.hero h1{font-size:24px}
+.hero p{opacity:.9;font-size:14px;margin-top:4px}
+.opts{margin:-44px 16px 0;position:relative}
+.opt{display:flex;align-items:center;gap:14px;background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:10px;width:100%;text-align:left}
+.opt.sel{border-color:var(--brand);background:var(--brand-l)}
+.opt .ic{font-size:26px}.opt b{display:block;font-size:15px}.opt span{font-size:12px;color:var(--ink2)}
+.tbl{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;font-size:13px}
+.tbl i{font-style:normal;background:rgba(255,255,255,.25);padding:5px 12px;border-radius:999px;font-weight:700}
+
+/* Menu */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line);scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{white-space:nowrap;padding:8px 16px;border-radius:999px;background:var(--bg);font-size:14px;font-weight:600;border:1px solid var(--line)}
+.cat.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.item{display:flex;gap:12px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--line);align-items:center;width:100%;text-align:left}
+.thumb{width:76px;height:76px;border-radius:14px;display:grid;place-items:center;font-size:38px;flex:none}
+.item .info{flex:1;min-width:0}.item b{font-size:15px;display:block}
+.item .d{font-size:12px;color:var(--ink2);margin:3px 0 6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .p{font-weight:700;font-size:14px}
+.add{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;font-size:20px;display:grid;place-items:center;flex:none}
+.sec{padding:16px 16px 6px;font-weight:800;font-size:16px}
+.cartbar{position:absolute;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));background:var(--brand);color:#fff;border-radius:999px;padding:14px 20px;display:none;justify-content:space-between;align-items:center;font-weight:700;box-shadow:0 8px 24px rgba(108,61,244,.45)}
+.cartbar.on{display:flex}
+.cartbar .n{background:#fff;color:var(--brand);border-radius:50%;width:24px;height:24px;display:inline-grid;place-items:center;font-size:13px;margin-right:10px}
+
+/* Sheet */
+.mask{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:.25s;z-index:10}
+.mask.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;transform:translateY(100%);transition:.3s;z-index:11;max-height:85%;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:#ddd;margin:10px auto 0}
+.sheet .body{padding:16px;overflow-y:auto}
+.grp{margin-top:16px}.grp h4{font-size:14px;margin-bottom:8px;display:flex;justify-content:space-between}
+.grp h4 small{color:var(--ink2);font-weight:500}
+.choice{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border:1.5px solid var(--line);border-radius:12px;margin-bottom:8px;width:100%;font-size:14px}
+.choice.sel{border-color:var(--brand);background:var(--brand-l)}
+.stepper{display:flex;align-items:center;gap:14px}
+.stepper button{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--brand);color:var(--brand);font-size:18px;font-weight:700}
+.stepper span{min-width:16px;text-align:center;font-weight:700}
+
+/* Cart lines */
+.line{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.line:last-child{border:0}
+.line .t{flex:1}.line .t b{font-size:14px}.line .t div{font-size:12px;color:var(--ink2)}
+
+/* Inputs */
+.field{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;margin-bottom:10px}
+.field:focus-within{border-color:var(--brand)}
+.field input{border:0;outline:0;padding:13px 4px;flex:1;min-width:0;font-size:15px;background:none}
+.field .pre{color:var(--ink2);font-size:14px;padding-right:6px;border-right:1px solid var(--line);margin-right:6px}
+.err{color:var(--red);font-size:12px;margin:-4px 0 8px 4px;display:none}
+.promo{display:flex;gap:8px}.promo .field{flex:1;margin:0}
+.promo button{padding:0 18px;border-radius:12px;background:var(--ink);color:#fff;font-weight:600;font-size:14px}
+
+/* Payment methods */
+.pm{display:flex;align-items:center;gap:12px;padding:14px;border:1.5px solid var(--line);border-radius:14px;margin-bottom:10px;width:100%;text-align:left;background:#fff}
+.pm.sel{border-color:var(--brand);background:var(--brand-l)}
+.pm .lg{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;flex:none}
+.pm b{font-size:15px;display:block}.pm span{font-size:12px;color:var(--ink2)}
+.radio{margin-left:auto;width:20px;height:20px;border-radius:50%;border:2px solid #ccc;flex:none}
+.pm.sel .radio{border:6px solid var(--brand)}
+.banks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.bank{padding:12px 10px;border:1.5px solid var(--line);border-radius:12px;font-size:13px;font-weight:600;text-align:center;background:#fff}
+.bank.sel{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d)}
+.secure{display:flex;gap:6px;align-items:center;justify-content:center;font-size:12px;color:var(--ink2);margin:16px 16px 0}
+
+/* Processing / gateway */
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px}
+.spin{width:56px;height:56px;border-radius:50%;border:5px solid var(--brand-l);border-top-color:var(--brand);animation:sp 0.9s linear infinite;margin-bottom:20px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.gw{background:#fff}
+.gwh{padding:14px 16px;color:#fff;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.qr{width:200px;height:200px;margin:16px auto;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+.timer{font-weight:800;font-size:22px;color:var(--brand-d)}
+
+/* Success */
+.ok{width:84px;height:84px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:44px;margin:0 auto 16px;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:none}}
+.bad{background:var(--red)}
+.steps{display:flex;justify-content:space-between;position:relative;margin:6px 4px 0}
+.steps:before{content:"";position:absolute;top:13px;left:10%;right:10%;height:3px;background:var(--line)}
+.stp{position:relative;text-align:center;flex:1;font-size:11px;color:var(--ink2)}
+.stp i{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--line);margin:0 auto 6px;font-style:normal;font-size:12px;position:relative}
+.stp.done i{background:var(--green);border-color:var(--green);color:#fff}
+.stp.cur i{border-color:var(--brand);color:var(--brand);animation:pulse 1.4s infinite}
+.stp.done,.stp.cur{color:var(--ink);font-weight:600}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(108,61,244,.2)}}
+.rc{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.toast{position:absolute;top:70px;left:50%;transform:translate(-50%,-20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;transition:.3s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.einv{display:flex;gap:10px;align-items:center}
+.sw{width:44px;height:26px;border-radius:13px;background:#ccc;position:relative;flex:none;transition:.2s}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--brand)}.sw.on:after{left:21px}
+
+.profbtn{position:absolute;top:22px;right:16px;background:rgba(255,255,255,.2);color:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600}
+.av{width:38px;height:38px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}
+.av.lg{width:84px;height:84px;font-size:36px;margin:0 auto 12px}
+.prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.prow:last-child{border:0}.prow .nm{flex:1;font-weight:600;font-size:15px}.prow .nm small{display:block;color:var(--ink2);font-weight:500;font-size:12px}
+.chip{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:var(--bg);color:var(--ink2);white-space:nowrap}
+.chip.yes{background:#E3F8EB;color:var(--green)}.chip.pay{background:var(--lime);color:#1F1F1F}.chip.wait{animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.4}}
+.cb{background:var(--lime);color:#1F1F1F;border-radius:var(--r);padding:14px 16px;margin:12px 16px 0;font-size:14px;display:flex;gap:12px;align-items:center}
+.cb b{font-weight:800}.cb .big{font-size:26px}
+.demo{background:#F4F1FF;border:1.5px dashed var(--brand);border-radius:var(--r);padding:14px;margin:12px 16px 0}
+.demo h3{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand-d);margin-bottom:10px}
+.demo .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.demo .chips button,.demo .mini{padding:8px 12px;border-radius:999px;background:#fff;border:1.5px solid var(--line);font-size:12.5px;font-weight:600}
+.demo .chips button.on{border-color:var(--brand);background:var(--brand);color:#fff}
+.demo .mini{margin:0 6px 6px 0}
+.prog{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 6px}.prog i{display:block;height:100%;background:var(--brand);transition:.3s}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:800;letter-spacing:3px;color:var(--brand-d);text-align:center;padding:10px;background:var(--brand-l);border-radius:12px;margin-bottom:10px}
+.votebtns{display:grid;gap:10px;margin:16px 16px 0}
+.vb{padding:16px;border-radius:var(--r);border:2px solid var(--line);background:#fff;text-align:left;font-size:15px}
+.vb b{display:block}.vb span{font-size:12px;color:var(--ink2)}.vb.on{border-color:var(--brand);background:var(--brand-l)}
+.vb.go{border-color:var(--brand)}
+.gsec{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;margin:10px 0 2px}
+.gsec .av{width:26px;height:26px;font-size:12px}
+.rolling{font-size:30px;font-weight:800;color:var(--brand-d);height:44px;margin:6px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 1 LANDING -->
+  <section class="screen on" id="s-landing">
+    <div class="scroll" style="padding:0">
+      <div class="hero">
+        <button class="profbtn" id="profBtn">👤 Profile</button>
+        <div class="logo">◆ SHARD<b>LAB</b></div>
+        <div class="store">☕</div>
+        <h1>Kopi Kaki Café</h1>
+        <p>Bangsar South, Kuala Lumpur · Open until 10 PM</p>
+        <div class="tbl">📍 You're at <i>Table 12</i></div>
+      </div>
+      <div class="opts">
+        <button class="opt sel" data-mode="Dine-in"><span class="ic">🍽️</span><div><b>Dine-in</b><span>Order &amp; pay from your table</span></div></button>
+        <button class="opt" data-mode="Takeaway"><span class="ic">🛍️</span><div><b>Takeaway</b><span>Ready in ~10 mins · Pick up at counter</span></div></button>
+        <button class="opt" data-mode="Group"><span class="ic">👥</span><div><b>Group order <span class="pill" style="font-size:11px;padding:2px 8px;margin-left:4px">NEW</span></b><span>4+ friends · one pays, earns 5% cashback</span></div></button>
+      </div>
+      <div class="card"><div class="row"><span class="muted">Pay with</span><span style="font-size:13px;font-weight:600">FPX · TNG · GrabPay · Boost · Cards</span></div>
+      <div class="row"><span class="muted">Cashback</span><span style="font-size:13px;font-weight:600">5% for group payers ✓</span></div>
+      <div class="row"><span class="muted">e-Invoice</span><span style="font-size:13px;font-weight:600">MyInvois ready ✓</span></div></div>
+    </div>
+    <div class="foot"><button class="btn" id="startBtn">Start ordering</button></div>
+  </section>
+
+  <!-- 2 MENU -->
+  <section class="screen" id="s-menu">
+    <div class="hdr"><button class="back" data-go="landing">‹</button><div style="flex:1"><div class="logo" style="font-size:16px">Kopi Kaki Café</div><div class="muted" id="modeLbl">Dine-in · Table 12</div></div><span class="pill">🕑 10 min</span></div>
+    <div class="cats" id="cats"></div>
+    <div class="scroll" id="menuList" style="padding-bottom:100px"></div>
+    <div class="cartbar" id="cartbar"><div><span class="n" id="cbN">0</span>View cart</div><div id="cbT">RM 0.00</div></div>
+  </section>
+
+  <!-- 3 CART -->
+  <section class="screen" id="s-cart">
+    <div class="hdr"><button class="back" data-go="menu">‹</button><h2 id="cartTitle">Your order</h2></div>
+    <div class="scroll">
+      <div class="card"><h3>Items</h3><div id="cartLines"></div>
+        <button class="muted" style="color:var(--brand-d);font-weight:600;margin-top:8px" data-go="menu">+ Add more items</button></div>
+      <div class="card"><h3>Note to kitchen</h3><div class="field" style="margin:0"><input id="note" placeholder="e.g. less sugar, no ice (optional)"></div></div>
+    </div>
+    <div class="foot"><button class="btn" id="toCheckout">Continue · <span id="cartSub"></span></button></div>
+  </section>
+
+  <!-- 4 CHECKOUT -->
+  <section class="screen" id="s-checkout">
+    <div class="hdr"><button class="back" data-go="cart">‹</button><h2>Checkout</h2></div>
+    <div class="scroll">
+      <div class="card"><h3>Order details</h3>
+        <div class="row"><span class="muted">Type</span><b id="ckMode"></b></div>
+        <div class="row"><span class="muted">Store</span><b>Kopi Kaki Café, Bangsar South</b></div></div>
+      <div id="grpCk"></div>
+      <div class="card"><h3>Contact</h3>
+        <div class="field"><span class="pre">🇲🇾 +60</span><input id="phone" type="tel" inputmode="numeric" placeholder="12 345 6789" maxlength="12"></div>
+        <div class="err" id="phoneErr">Enter a valid Malaysian mobile number</div>
+        <div class="field"><input id="name" placeholder="Name (for order pickup call-out)"></div>
+        <div class="muted">We'll send your e-receipt via WhatsApp / SMS.</div></div>
+      <div class="card"><h3>Promo code</h3>
+        <div class="promo"><div class="field"><input id="promo" placeholder="Try SHARD10"></div><button id="promoBtn">Apply</button></div>
+        <div class="err" id="promoErr">Invalid or expired code</div></div>
+      <div id="cbCard"></div>
+      <div class="card"><h3>Payment summary</h3><div id="sum"></div></div>
+    </div>
+    <div class="foot"><button class="btn" id="toPay">Select payment</button></div>
+  </section>
+
+  <!-- 5 PAYMENT -->
+  <section class="screen" id="s-pay">
+    <div class="hdr"><button class="back" data-go="checkout">‹</button><h2>Payment</h2><b id="payAmt" style="color:var(--brand-d)"></b></div>
+    <div class="scroll" style="padding:16px 16px 24px">
+      <div id="pmList"></div>
+      <div id="bankWrap" style="display:none"><h4 style="font-size:14px;margin:14px 0 8px">Choose your bank</h4><div class="banks" id="banks"></div></div>
+      <div class="secure">🔒 Payments are encrypted &amp; processed securely</div>
+    </div>
+    <div class="foot"><button class="btn" id="payBtn" disabled>Pay</button></div>
+  </section>
+
+  <!-- 6 GATEWAY (simulated) -->
+  <section class="screen gw" id="s-gw">
+    <div class="gwh" id="gwHead"><span id="gwName">Gateway</span><span style="font-size:12px;opacity:.85">🔒 Secure</span></div>
+    <div class="scroll" id="gwBody" style="padding:20px 16px"></div>
+  </section>
+
+  <!-- 7 PROCESSING -->
+  <section class="screen" id="s-proc">
+    <div class="center"><div class="spin"></div><h2>Confirming payment…</h2><p class="muted" style="margin-top:8px">Please don't close or refresh this page.</p></div>
+  </section>
+
+  <!-- 8 RESULT -->
+  <section class="screen" id="s-done">
+    <div class="scroll" id="doneBody" style="padding-top:28px"></div>
+    <div class="foot" id="doneFoot"></div>
+  </section>
+
+  
+  <!-- LOBBY -->
+  <section class="screen" id="s-lobby">
+    <div class="hdr"><button class="back" data-go="landing">‹</button><h2>Group order</h2><span class="pill">Table 12</span></div>
+    <div class="scroll" id="lobbyBody"></div>
+    <div class="foot" id="lobbyFoot"></div>
+  </section>
+
+  <!-- GUEST JOIN -->
+  <section class="screen" id="s-join">
+    <div class="hdr"><button class="back" data-go="lobby">‹</button><h2>Join group order</h2></div>
+    <div class="scroll" style="padding:24px 16px">
+      <div class="card" style="text-align:center;margin:0"><div class="logo" style="margin-bottom:14px">◆ SHARD<b>LAB</b></div>
+        <div class="store" style="margin:0 auto 12px;width:64px;height:64px;font-size:30px;box-shadow:none;background:var(--brand-l)">☕</div>
+        <h3 style="font-size:17px;margin-bottom:4px"><span id="inviter"></span> invited you</h3>
+        <p class="muted" style="margin-bottom:18px">Kopi Kaki Café · Table 12 · Group order</p>
+        <div class="field"><input id="guestName" placeholder="Your name" maxlength="20"></div>
+        <div class="err" id="guestErr"></div>
+        <button class="btn" id="joinBtn">Join group</button>
+        <p class="muted" style="margin-top:12px">Your name is shown to everyone in the group.</p></div>
+    </div>
+  </section>
+
+  <!-- VOTE -->
+  <section class="screen" id="s-vote">
+    <div class="hdr"><button class="back" data-go="cart">‹</button><h2>Who's paying?</h2></div>
+    <div class="scroll" id="voteBody"></div>
+    <div class="foot" id="voteFoot" style="display:none"></div>
+  </section>
+
+  <!-- GUEST WAIT -->
+  <section class="screen" id="s-wait">
+    <div class="center"><div id="waitAv"></div><h2 id="waitT"></h2><p class="muted" style="margin:8px 0 22px">You don't need to pay. We'll update this page once the bill is settled.</p><div class="spin" style="margin:0"></div></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="screen" id="s-profile">
+    <div class="hdr"><button class="back" data-go="landing">‹</button><h2>ShardLab profile</h2></div>
+    <div class="scroll" id="profBody"></div>
+  </section>
+
+  <div class="mask" id="mask"></div>
+  <div class="sheet" id="sheet"><div class="grab"></div><div class="body" id="sheetBody"></div></div>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const rm=n=>"RM "+n.toFixed(2);
+const SST=0.06, SVC=0.10;
+
+const MENU=[
+ {cat:"Coffee",items:[
+  {id:1,n:"Kopi O Gao",d:"Thick, bold traditional black coffee brewed in a sock filter.",p:5.5,e:"☕",c:"#F3E0CC",opt:["temp","sugar"]},
+  {id:2,n:"White Coffee Latte",d:"Ipoh-style white coffee with steamed milk.",p:9.9,e:"🥛",c:"#FBEBD3",opt:["temp","sugar","size"]},
+  {id:3,n:"Iced Gula Melaka Latte",d:"Espresso, fresh milk and palm sugar syrup over ice.",p:12.9,e:"🧋",c:"#E8D5C0",opt:["sugar","size"]},
+ ]},
+ {cat:"Mains",items:[
+  {id:4,n:"Nasi Lemak Ayam Berempah",d:"Coconut rice, spiced fried chicken, sambal, egg, ikan bilis.",p:15.9,e:"🍛",c:"#FFE7C2",opt:["spice","addon"]},
+  {id:5,n:"Mee Goreng Mamak",d:"Wok-fried yellow noodles, egg, tofu, fritters and lime.",p:12.5,e:"🍜",c:"#FFD9B0",opt:["spice","addon"]},
+  {id:6,n:"Kaya Butter Toast Set",d:"Charcoal toast, kaya, butter, 2 soft-boiled eggs.",p:10.9,e:"🍞",c:"#FFF0C9",opt:[]},
+ ]},
+ {cat:"Snacks",items:[
+  {id:7,n:"Pisang Goreng (5pc)",d:"Crispy golden banana fritters.",p:7.5,e:"🍌",c:"#FFF3BF",opt:[]},
+  {id:8,n:"Curry Puff Trio",d:"Sardine, chicken potato and sweet potato.",p:8.9,e:"🥟",c:"#FFE0B8",opt:[]},
+ ]},
+ {cat:"Desserts",items:[
+  {id:9,n:"Cendol Durian",d:"Shaved ice, pandan jelly, gula melaka and D24 durian.",p:14.9,e:"🍧",c:"#D8F0D2",opt:[]},
+ ]},
+];
+const OPTS={
+ temp:{t:"Temperature",req:1,ch:[["Hot",0],["Iced",0.5]]},
+ sugar:{t:"Sweetness",req:1,ch:[["Normal",0],["Less sweet",0],["No sugar",0]]},
+ size:{t:"Size",req:1,ch:[["Regular",0],["Large",2]]},
+ spice:{t:"Spice level",req:1,ch:[["Mild",0],["Medium",0],["Extra pedas",0]]},
+ addon:{t:"Add-ons",req:0,multi:1,ch:[["Fried egg",1.5],["Extra sambal",1],["Cucumber",0.5]]},
+};
+const PAY=[
+ {id:"fpx",n:"Online Banking (FPX)",s:"Pay via your bank account",c:"#0B3D91",l:"FPX"},
+ {id:"tng",n:"Touch 'n Go eWallet",s:"Open TNG app to pay",c:"#005EB8",l:"TNG"},
+ {id:"grab",n:"GrabPay",s:"Pay with your Grab wallet",c:"#00A862",l:"Grab"},
+ {id:"boost",n:"Boost",s:"Pay with Boost eWallet",c:"#E5002B",l:"Boost"},
+ {id:"card",n:"Credit / Debit Card",s:"Visa · Mastercard",c:"#1F1F1F",l:"💳"},
+ {id:"duit",n:"DuitNow QR",s:"Scan with any banking app",c:"#E6007E",l:"QR"},
+];
+const BANKS=["Maybank2u","CIMB Clicks","Public Bank","RHB Now","Hong Leong","AmBank","Bank Islam","BSN"];
+
+const CB_RATE=0.05, MIN_GROUP=4, MAX_GROUP=12;
+const NAMES=["Aisha","Wei Jie","Priya","Hafiz","Mei Ling","Raj","Siti","Daniel","Kavitha","Jun Hao","Nurul","Arjun"];
+const COLORS=["#6C3DF4","#E8590C","#0CA678","#D6336C","#1C7ED6","#F59F00","#7048E8","#099268"];
+const S={mode:"Dine-in",isGroup:false,cat:0,cart:[],promo:null,pay:null,bank:null,order:null,einv:false,useCb:false,demo:"mixed",people:[],vote:null,phone:"",name:"",code:null};
+let cartSeq=0,pid=0,voteTimers=[];
+const r2=n=>Math.round(n*100)/100;
+/* ShardLab accounts: keyed by mobile number, persisted in this browser */
+const AK="shardlab_accounts";
+let ACC=(()=>{try{return JSON.parse(localStorage.getItem(AK))||{}}catch(e){return{}}})();
+const persist=()=>{try{localStorage.setItem(AK,JSON.stringify(ACC))}catch(e){}};
+const cbBal=()=>(ACC[S.phone]&&ACC[S.phone].cb)||0;
+function credit(phone,name,amt,note){const a=ACC[phone]||(ACC[phone]={name,cb:0,hist:[]});if(name)a.name=name;a.cb=r2(a.cb+amt);a.hist.unshift({t:Date.now(),amt:r2(amt),note});persist()}
+const fmtPh=v=>{v=v.replace(/\D/g,"");return v.length>3?v.slice(0,2)+" "+v.slice(2,6)+(v.length>6?" "+v.slice(6,10):""):v};
+const me=()=>S.people.find(p=>p.me);
+const avatar=(p,cls="")=>`<div class="av ${cls}" style="background:${COLORS[Math.max(0,S.people.findIndex(x=>x.id===p.id))%COLORS.length]}">${p.name[0].toUpperCase()}</div>`;
+
+/* nav */
+function go(id){$$(".screen").forEach(s=>s.classList.toggle("on",s.id==="s-"+id));
+  ({menu:renderMenu,cart:renderCart,checkout:renderCheckout,pay:renderPay,lobby:renderLobby,vote:renderVote,profile:renderProfile})[id]?.();}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),1800)}
+function openSheet(h){$("#sheetBody").innerHTML=h;$("#mask").classList.add("on");$("#sheet").classList.add("on")}
+function closeSheet(){$("#mask").classList.remove("on");$("#sheet").classList.remove("on")}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g)go(g.dataset.go)});
+$("#mask").onclick=closeSheet;
+
+/* totals */
+function totals(){
+  const sub=S.cart.reduce((a,l)=>a+l.price*l.qty,0);
+  let disc=0; if(S.promo==="SHARD10")disc=Math.min(sub*0.10,8);
+  const net=sub-disc;
+  const svc=S.mode==="Dine-in"?net*SVC:0;
+  const tax=(net+svc)*SST;
+  const raw=net+svc+tax;
+  const total=Math.round(raw*20)/20;
+  const cb=S.useCb?Math.min(cbBal(),total):0;
+  return{sub,disc,svc,tax,round:total-raw,total,cb,pay:r2(total-cb)};
+}
+const count=()=>S.cart.reduce((a,l)=>a+l.qty,0);
+
+/* landing */
+$$(".opt").forEach(o=>o.onclick=()=>{$$(".opt").forEach(x=>x.classList.remove("sel"));o.classList.add("sel");
+  const g=o.dataset.mode==="Group";if(g!==S.isGroup){S.cart=[];S.people=[];S.vote=null}
+  S.isGroup=g;S.mode=g?"Dine-in":o.dataset.mode;$("#startBtn").textContent=g?"Create group order":"Start ordering"});
+$("#startBtn").onclick=()=>go(S.isGroup?"lobby":"menu");
+$("#profBtn").onclick=()=>go("profile");
+
+/* menu */
+function renderMenu(){
+  $("#modeLbl").textContent=S.isGroup?`Group · ${S.people.length} people · Table 12`:S.mode==="Dine-in"?"Dine-in · Table 12":"Takeaway";$("#s-menu .back").dataset.go=S.isGroup?"lobby":"landing";
+  $("#cats").innerHTML=MENU.map((c,i)=>`<button class="cat ${i===S.cat?"on":""}" data-i="${i}">${c.cat}</button>`).join("");
+  $$(".cat").forEach(b=>b.onclick=()=>{S.cat=+b.dataset.i;renderMenu();$("#menuList").scrollTo(0,0)});
+  const c=MENU[S.cat];
+  $("#menuList").innerHTML=`<div class="sec">${c.cat}</div>`+c.items.map(i=>`
+   <button class="item" data-id="${i.id}"><div class="thumb" style="background:${i.c}">${i.e}</div>
+   <div class="info"><b>${i.n}</b><div class="d">${i.d}</div><div class="p">${rm(i.p)}</div></div><div class="add">+</div></button>`).join("");
+  $$(".item").forEach(b=>b.onclick=()=>openItem(+b.dataset.id));
+  updateBar();
+}
+function updateBar(){const n=count(),t=totals();$("#cartbar").classList.toggle("on",n>0);$("#cbN").textContent=n;$("#cbT").textContent=rm(t.sub)}
+$("#cartbar").onclick=()=>go("cart");
+
+function openItem(id){
+  const it=MENU.flatMap(c=>c.items).find(i=>i.id===id);
+  const sel={};let qty=1;
+  it.opt.forEach(k=>{sel[k]=OPTS[k].multi?[]:0});
+  const price=()=>it.p+it.opt.reduce((a,k)=>{const o=OPTS[k];return a+(o.multi?sel[k].reduce((x,i)=>x+o.ch[i][1],0):o.ch[sel[k]][1])},0);
+  const draw=()=>{
+    openSheet(`<div style="display:flex;gap:12px;align-items:center"><div class="thumb" style="background:${it.c}">${it.e}</div><div><b style="font-size:17px">${it.n}</b><div class="muted" style="margin-top:4px">${it.d}</div></div></div>
+    ${it.opt.map(k=>{const o=OPTS[k];return `<div class="grp"><h4>${o.t}<small>${o.multi?"Optional":"Required"}</small></h4>${o.ch.map((c,i)=>{
+      const on=o.multi?sel[k].includes(i):sel[k]===i;
+      return `<button class="choice ${on?"sel":""}" data-k="${k}" data-i="${i}"><span>${c[0]}</span><span class="muted">${c[1]?"+"+rm(c[1]):""}</span></button>`}).join("")}</div>`}).join("")}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 14px"><div class="stepper"><button id="qMinus">−</button><span>${qty}</span><button id="qPlus">+</button></div><b style="font-size:17px">${rm(price()*qty)}</b></div>
+    <button class="btn" id="addCart">Add to order</button>`);
+    $$("#sheetBody .choice").forEach(b=>b.onclick=()=>{const k=b.dataset.k,i=+b.dataset.i;
+      if(OPTS[k].multi){const a=sel[k],x=a.indexOf(i);x>-1?a.splice(x,1):a.push(i)}else sel[k]=i;draw()});
+    $("#qMinus").onclick=()=>{if(qty>1){qty--;draw()}};$("#qPlus").onclick=()=>{qty++;draw()};
+    $("#addCart").onclick=()=>{
+      const desc=it.opt.map(k=>{const o=OPTS[k];return o.multi?sel[k].map(i=>o.ch[i][0]).join(", "):o.ch[sel[k]][0]}).filter(Boolean).join(" · ");
+      S.cart.push({uid:++cartSeq,id:it.id,n:it.n,e:it.e,c:it.c,desc,price:price(),qty,by:S.isGroup?me().id:undefined});
+      closeSheet();updateBar();toast("Added to order");};
+  };draw();
+}
+
+/* cart */
+function lineHTML(l,edit){return `<div class="line"><div class="thumb" style="width:48px;height:48px;font-size:24px;background:${l.c};border-radius:10px">${l.e}</div>
+   <div class="t"><b>${l.n}</b><div>${l.desc}</div><b style="font-size:13px">${rm(l.price*l.qty)}</b></div>
+   ${edit?`<div class="stepper" style="align-self:center"><button data-u="${l.uid}" data-d="-1">−</button><span>${l.qty}</span><button data-u="${l.uid}" data-d="1">+</button></div>`:`<span class="muted" style="align-self:center">×${l.qty}</span>`}</div>`}
+function renderCart(){
+  const g=S.isGroup;
+  $("#cartTitle").textContent=g?`Group order · ${S.people.length} people`:"Your order";
+  if(!S.cart.length)$("#cartLines").innerHTML=`<div class="muted" style="padding:20px 0;text-align:center">Your cart is empty</div>`;
+  else if(!g)$("#cartLines").innerHTML=S.cart.map(l=>lineHTML(l,true)).join("");
+  else $("#cartLines").innerHTML=S.people.map(p=>{const ls=S.cart.filter(l=>l.by===p.id);
+    return `<div class="gsec">${avatar(p)}${p.name}${p.me?" (You)":""}<span class="muted" style="margin-left:auto;font-weight:600">${rm(ls.reduce((a,l)=>a+l.price*l.qty,0))}</span></div>`+
+      (ls.length?ls.map(l=>lineHTML(l,p.me)).join(""):`<div class="muted" style="padding:6px 0 10px">No items yet</div>`)}).join("");
+  $$("#cartLines .stepper button").forEach(b=>b.onclick=()=>{
+    const l=S.cart.find(x=>x.uid==b.dataset.u);l.qty+=+b.dataset.d;
+    if(l.qty<1)S.cart=S.cart.filter(x=>x!==l);renderCart();updateBar()});
+  $("#toCheckout").innerHTML=(g?"Lock order &amp; choose payer · ":"Continue · ")+rm(totals().sub);
+  $("#toCheckout").disabled=!S.cart.length;
+}
+$("#toCheckout").onclick=()=>{if(S.isGroup){startVote();go("vote")}else go("checkout")};
+
+/* checkout */
+function sumHTML(){const t=totals();
+  return `<div class="row"><span>Subtotal</span><span>${rm(t.sub)}</span></div>
+  ${t.disc?`<div class="row" style="color:var(--green)"><span>Promo (SHARD10)</span><span>− ${rm(t.disc)}</span></div>`:""}
+  ${t.svc?`<div class="row"><span>Service charge (10%)</span><span>${rm(t.svc)}</span></div>`:""}
+  <div class="row"><span>SST (6%)</span><span>${rm(t.tax)}</span></div>
+  <div class="row"><span>Rounding</span><span>${t.round<0?"− ":""}${rm(Math.abs(t.round))}</span></div>
+  <div class="row ${t.cb?"":"total"}"><span>${t.cb?"Bill total":"Total"}</span><span>${rm(t.total)}</span></div>
+  ${t.cb?`<div class="row" style="color:var(--green)"><span>ShardLab cashback</span><span>− ${rm(t.cb)}</span></div><div class="row total"><span>To pay</span><span>${rm(t.pay)}</span></div>`:""}`}
+function renderCheckout(){
+  const g=S.isGroup,t=totals();
+  $("#s-checkout .back").dataset.go=g?"vote":"cart";
+  $("#ckMode").textContent=g?`Group (${S.people.length} people) · Table 12`:S.mode==="Dine-in"?"Dine-in · Table 12":"Takeaway";
+  if(g){if(!$("#name").value)$("#name").value=me().name;
+    $("#grpCk").innerHTML=`<div class="cb"><span class="big">🎉</span><div>You're paying for <b>${S.people.length} people</b>.<br>Earn <b>${rm(r2(t.total*CB_RATE))}</b> (5%) cashback in your ShardLab profile once paid.</div></div>`}
+  else $("#grpCk").innerHTML="";
+  const bal=cbBal();
+  $("#cbCard").innerHTML=!S.phone?`<div class="card"><div class="muted">💜 Enter your mobile number above to use your ShardLab cashback on this order.</div></div>`
+   :bal>0?`<div class="card"><div class="einv"><div style="flex:1"><b style="font-size:14px">Use ShardLab cashback</b><div class="muted">Balance ${rm(bal)} · applies up to the bill total</div></div><button class="sw ${S.useCb?"on":""}" id="cbSw" aria-label="toggle cashback"></button></div></div>`
+   :`<div class="card"><div class="muted">💜 No cashback yet for ${S.phone}. Volunteer to pay on a group order to earn 5%.</div></div>`;
+  const sw=$("#cbSw");if(sw)sw.onclick=()=>{S.useCb=!S.useCb;renderCheckout()};
+  $("#sum").innerHTML=sumHTML();
+}
+$("#phone").oninput=e=>{e.target.value=fmtPh(e.target.value);$("#phoneErr").style.display="none";
+  const d=e.target.value.replace(/\D/g,"");S.phone=/^1\d{8,9}$/.test(d)?"+60"+d:"";if(!cbBal())S.useCb=false;renderCheckout()};
+$("#promoBtn").onclick=()=>{const v=$("#promo").value.trim().toUpperCase();
+  if(v==="SHARD10"){S.promo=v;$("#promoErr").style.display="none";toast("Promo applied: 10% off (max RM8)")}
+  else{S.promo=null;$("#promoErr").style.display=v?"block":"none"}renderCheckout()};
+$("#toPay").onclick=()=>{
+  const d=$("#phone").value.replace(/\D/g,"");
+  if(!/^1\d{8,9}$/.test(d)){$("#phoneErr").style.display="block";$("#phone").focus();return}
+  S.phone="+60"+d;S.name=$("#name").value.trim()||(S.isGroup?me().name:"Guest");go("pay")};
+
+/* payment select */
+function payLabel(t){const m=S.pay==="cashback"?"ShardLab cashback":S.pay==="fpx"?"FPX · "+S.bank:PAY.find(p=>p.id===S.pay).n;return t.cb&&S.pay!=="cashback"?m+" + cashback":m}
+function renderPay(){
+  const t=totals(),free=t.pay===0;
+  if(S.pay==="cashback")S.pay=null;
+  $("#payAmt").textContent=rm(t.pay);
+  $("#pmList").innerHTML=free?`<div class="cb" style="margin:0"><span class="big">💜</span><div><b>Fully covered by your ShardLab cashback.</b><br>No payment needed — confirm to place your order.</div></div>`
+   :(t.cb?`<div class="muted" style="margin-bottom:10px">ShardLab cashback of ${rm(t.cb)} applied · pay the remaining ${rm(t.pay)}</div>`:"")+PAY.map(p=>`<button class="pm ${S.pay===p.id?"sel":""}" data-p="${p.id}"><div class="lg" style="background:${p.c}">${p.l}</div><div><b>${p.n}</b><span>${p.s}</span></div><div class="radio"></div></button>`).join("");
+  $$(".pm").forEach(b=>b.onclick=()=>{S.pay=b.dataset.p;if(S.pay!=="fpx")S.bank=null;renderPay()});
+  $("#bankWrap").style.display=!free&&S.pay==="fpx"?"block":"none";
+  $("#banks").innerHTML=BANKS.map(b=>`<button class="bank ${S.bank===b?"sel":""}" data-b="${b}">${b}</button>`).join("");
+  $$(".bank").forEach(b=>b.onclick=()=>{S.bank=b.dataset.b;renderPay()});
+  const ok=free||(S.pay&&(S.pay!=="fpx"||S.bank));
+  $("#payBtn").disabled=!ok;$("#payBtn").textContent=free?"Confirm order":ok?`Pay ${rm(t.pay)}`:(S.pay==="fpx"?"Select a bank":"Select a payment method");
+}
+$("#payBtn").onclick=()=>{if(totals().pay===0){S.pay="cashback";process(true)}else startGateway()};
+
+/* simulated gateways */
+let qrTimer;
+function startGateway(){
+  const p=PAY.find(x=>x.id===S.pay),amt=rm(totals().pay);
+  $("#gwHead").style.background=p.c;
+  $("#gwName").textContent=S.pay==="fpx"?S.bank:p.n;
+  let h="";
+  if(S.pay==="fpx"){
+    h=`<div class="card" style="margin:0 0 16px"><div class="row"><span class="muted">Merchant</span><b>ShardLab · Kopi Kaki</b></div><div class="row"><span class="muted">Amount</span><b>${amt}</b></div></div>
+    <h3 style="margin-bottom:10px">Log in to ${S.bank}</h3>
+    <div class="field"><input placeholder="Username" value="demo_user"></div><div class="field"><input type="password" value="••••••••"></div>
+    <div class="muted" style="margin:6px 0 18px">Demo only — no real credentials needed.</div>
+    <button class="btn" id="gwOk">Login &amp; approve</button>`;
+  }else if(S.pay==="card"){
+    h=`<div class="card" style="margin:0 0 16px"><div class="row"><span class="muted">Amount</span><b>${amt}</b></div></div>
+    <div class="field"><input id="cn" inputmode="numeric" placeholder="Card number" value="4242 4242 4242 4242" maxlength="19"></div>
+    <div style="display:flex;gap:10px"><div class="field" style="flex:1"><input placeholder="MM / YY" value="12 / 29"></div><div class="field" style="flex:1"><input placeholder="CVV" value="123" maxlength="4"></div></div>
+    <div class="field"><input placeholder="Name on card" value="${S.name.toUpperCase()}"></div>
+    <div class="muted" style="margin-bottom:16px">Test card prefilled. Use 4000 0000 0000 0002 to simulate a decline.</div>
+    <button class="btn" id="gwOk">Pay ${amt}</button>`;
+  }else if(S.pay==="duit"){
+    h=qrHTML(amt,"Scan with any DuitNow-enabled banking or eWallet app");
+  }else{
+    h=`<div style="text-align:center;padding-top:10px"><div class="lg pm" style="display:none"></div>
+    <div style="font-size:48px">📲</div><h3 style="margin:10px 0 4px">Approve in ${p.n.split(" ")[0]==="Touch"?"Touch 'n Go":p.n} app</h3>
+    <p class="muted">We've sent a payment request of <b>${amt}</b> to <b>${S.phone}</b>.</p>
+    <div class="timer" style="margin:18px 0" id="tm">02:00</div></div>
+    <button class="btn" id="gwOk">Simulate: approve in app</button>`;
+  }
+  h+=`<button class="btn ghost" id="gwFail" style="margin-top:10px">Simulate: payment failure</button><button class="muted" id="gwCancel" style="display:block;margin:16px auto 0">Cancel payment</button>`;
+  $("#gwBody").innerHTML=h;go("gw");
+  const cn=$("#cn");if(cn)cn.oninput=e=>{let v=e.target.value.replace(/\D/g,"").slice(0,16);e.target.value=v.replace(/(.{4})/g,"$1 ").trim()};
+  $("#gwOk").onclick=()=>{
+    if(cn&&cn.value.replace(/\s/g,"")==="4000000000000002")return finish(false,"Your card was declined by the issuing bank.");
+    process(true)};
+  $("#gwFail").onclick=()=>process(false);
+  $("#gwCancel").onclick=()=>{clearInterval(qrTimer);go("pay");toast("Payment cancelled")};
+  if($("#tm")||$("#qrt")){let s=120;clearInterval(qrTimer);qrTimer=setInterval(()=>{s--;const el=$("#tm")||$("#qrt");
+    if(!el||s<0){clearInterval(qrTimer);if(el)finish(false,"Payment session expired.");return}
+    el.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000)}
+}
+function qrHTML(amt,txt){
+  let cells="";const seed=[...amt].reduce((a,c)=>a+c.charCodeAt(0),7);
+  for(let y=0;y<21;y++)for(let x=0;x<21;x++){
+    const f=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
+    let on=f?((x%6===0||y%6===0||x%14===0||y%14===0||(x>1&&x<5&&y>1&&y<5)||(x>15&&x<19&&y>1&&y<5)||(x>1&&x<5&&y>15&&y<19))&&!(x===1&&y===1&&0)):((x*31+y*17+seed*(x^y))%5<2);
+    if(f){const lx=x%14,ly=y%14;on=(lx===0||lx===6||ly===0||ly===6||(lx>1&&lx<5&&ly>1&&ly<5))}
+    if(on)cells+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
+  return `<div style="text-align:center"><h3>${amt}</h3><div class="qr"><svg viewBox="0 0 21 21" width="100%" height="100%" shape-rendering="crispEdges" fill="#1F1F1F">${cells}</svg></div>
+  <p class="muted">${txt}</p><div class="timer" style="margin:14px 0" id="qrt">02:00</div></div>
+  <button class="btn" id="gwOk">Simulate: payment received</button>`}
+function process(ok){clearInterval(qrTimer);go("proc");setTimeout(()=>finish(ok,"The bank did not approve this transaction."),1800)}
+
+/* result */
+function startProgress(no){S.order.stage=0;[3500,9000].forEach((ms,i)=>setTimeout(()=>{if(S.order&&S.order.no===no){S.order.stage=i+1;renderDone()}},ms))}
+function finish(ok,msg){
+  clearInterval(qrTimer);
+  const t=totals();
+  if(!ok){
+    $("#doneBody").innerHTML=`<div class="center" style="padding-top:60px"><div class="ok bad">✕</div><h2>Payment failed</h2><p class="muted" style="margin-top:8px;max-width:280px">${msg} You have not been charged.</p></div>`;
+    $("#doneFoot").innerHTML=`<button class="btn" id="retry">Try again</button><button class="btn ghost" style="margin-top:10px" id="chg">Use another method</button>`;
+    go("done");$("#retry").onclick=()=>t.pay===0?process(true):startGateway();$("#chg").onclick=()=>go("pay");return}
+  const no="SL"+Math.floor(10000+Math.random()*89999);
+  const label=payLabel(t);let earned=0;
+  if(t.cb>0)credit(S.phone,S.name,-t.cb,"Redeemed at Kopi Kaki Café");
+  if(S.isGroup){earned=r2(t.total*CB_RATE);credit(S.phone,S.name,earned,`5% group payer cashback · ${no}`)}
+  S.order={no,t,time:new Date(),items:[...S.cart],pay:label,ref:"SL"+Date.now().toString().slice(-9),earned,bal:cbBal(),
+    payer:S.isGroup?me().name:null,payerMe:true,people:[...S.people]};
+  S.useCb=false;renderDone();go("done");startProgress(no);
+}
+function renderDone(){
+  const o=S.order,st=o.stage||0,t=o.t,g=!!o.payer;
+  const labels=["Paid","Preparing","Ready"];
+  const msg=["Your order has been sent to the kitchen","The kitchen is preparing your order","Your order is ready! "+(S.mode==="Dine-in"?"Served shortly to Table 12":"Please collect at the counter")][st];
+  const nameOf=id=>(o.people.find(p=>p.id===id)||{}).name;
+  const keep=$("#doneBody").scrollTop;
+  $("#doneBody").innerHTML=`<div style="text-align:center;padding:0 16px"><div class="ok">✓</div><h2>${o.payerMe?"Payment successful":o.payer+" paid the bill"}</h2><div class="muted" style="margin-top:4px">${o.payerMe?`${rm(t.pay)} paid via ${o.pay}`:"Your group's order is confirmed — nothing to pay"}</div></div>
+  ${g&&o.payerMe&&o.earned?`<div class="cb"><span class="big">💜</span><div><b>+${rm(o.earned)} cashback earned</b><br>Added to your ShardLab profile · balance <b>${rm(o.bal)}</b>. Use it on your next visit by entering ${S.phone} at checkout.<br><button id="seeProf" style="font-weight:800;text-decoration:underline;margin-top:6px">View profile</button></div></div>`:""}
+  ${t.cb?`<div class="cb" style="background:var(--brand-l)"><span class="big">💜</span><div>You used <b>${rm(t.cb)}</b> of ShardLab cashback on this order.</div></div>`:""}
+  ${g&&!o.payerMe?`<div class="cb" style="background:var(--brand-l)"><span class="big">💳</span><div><b>${o.payer}</b> is the group payer and earns <b>${rm(r2(t.total*CB_RATE))}</b> cashback.</div></div>`:""}
+  <div class="card" style="text-align:center"><div class="muted">Order number</div><div style="font-size:36px;font-weight:800;color:var(--brand-d);letter-spacing:1px">${o.no}</div>
+   <div class="pill">${g?`Group · ${o.people.length} people`:S.mode}${S.mode==="Dine-in"?" · Table 12":""}</div>
+   <div class="steps" style="margin-top:20px">${labels.map((l,i)=>`<div class="stp ${i<st?"done":i===st?(st===2?"done":"cur"):""}"><i>${i<st||st===2?"✓":i+1}</i>${l}</div>`).join("")}</div>
+   <div style="margin-top:16px;font-size:14px;font-weight:600">${msg}</div></div>
+  <div class="card"><h3>E-receipt</h3><div class="rc">
+   <div class="row"><span>Kopi Kaki Café</span><span>${o.time.toLocaleDateString("en-MY")} ${o.time.toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"})}</span></div>
+   <div class="row"><span>Ref</span><span>${o.ref}</span></div>${g?`<div class="row"><span>Paid by</span><span>${o.payer}</span></div>`:""}<hr style="border:0;border-top:1px dashed #ccc;margin:8px 0">
+   ${o.items.map(l=>`<div class="row"><span>${l.qty}× ${l.n}${l.by?` <small style="color:#888">(${nameOf(l.by)})</small>`:""}</span><span>${(l.price*l.qty).toFixed(2)}</span></div>`).join("")}
+   <hr style="border:0;border-top:1px dashed #ccc;margin:8px 0">
+   <div class="row"><span>Subtotal</span><span>${t.sub.toFixed(2)}</span></div>
+   ${t.disc?`<div class="row"><span>Discount</span><span>-${t.disc.toFixed(2)}</span></div>`:""}
+   ${t.svc?`<div class="row"><span>Service charge 10%</span><span>${t.svc.toFixed(2)}</span></div>`:""}
+   <div class="row"><span>SST 6%</span><span>${t.tax.toFixed(2)}</span></div>
+   <div class="row"><span>Rounding</span><span>${t.round.toFixed(2)}</span></div>
+   <div class="row" style="font-weight:800"><span>TOTAL</span><span>${t.total.toFixed(2)}</span></div>
+   ${t.cb?`<div class="row"><span>ShardLab cashback</span><span>-${t.cb.toFixed(2)}</span></div><div class="row" style="font-weight:800"><span>PAID</span><span>${t.pay.toFixed(2)}</span></div>`:""}</div>
+   ${o.payerMe?`<div class="muted" style="margin-top:10px">Sent to ${S.phone} via WhatsApp</div>`:""}</div>
+  ${o.payerMe?`<div class="card"><div class="einv"><div style="flex:1"><b style="font-size:14px">Need an e-Invoice?</b><div class="muted">Request a MyInvois e-Invoice with your TIN</div></div><button class="sw ${S.einv?"on":""}" id="einvSw" aria-label="toggle"></button></div>
+   <div id="einvForm" style="display:${S.einv?"block":"none"};margin-top:14px">
+    <div class="field"><input id="tin" placeholder="TIN (e.g. IG12345678900)" ></div>
+    <div class="field"><input id="ic" placeholder="NRIC / Business reg. no."></div>
+    <button class="btn" id="einvSend" style="padding:12px">Submit request</button></div></div>`:""}
+  <div class="card" style="text-align:center"><div class="muted">How was your experience?</div><div style="font-size:28px;letter-spacing:6px;margin-top:6px" id="stars">☆☆☆☆☆</div></div>`;
+  $("#doneBody").scrollTop=keep;
+  $("#doneFoot").innerHTML=`<button class="btn" id="again">Order again</button>`;
+  const sw=$("#einvSw");if(sw)sw.onclick=()=>{S.einv=!S.einv;renderDone()};
+  const sp=$("#seeProf");if(sp)sp.onclick=()=>go("profile");
+  const es=$("#einvSend");if(es)es.onclick=()=>{if(!$("#tin").value.trim())return toast("Please enter your TIN");toast("e-Invoice request submitted ✓");es.disabled=true;es.textContent="Submitted ✓"};
+  $("#stars").onclick=e=>{const r=e.currentTarget.getBoundingClientRect(),n=Math.ceil((e.clientX-r.left)/r.width*5);e.currentTarget.textContent="★".repeat(n)+"☆".repeat(5-n);toast("Thanks for your feedback!")};
+  $("#again").onclick=()=>{clearVote();S.cart=[];S.promo=null;S.pay=null;S.bank=null;S.order=null;S.einv=false;S.useCb=false;S.people=[];S.vote=null;S.isGroup=false;S.mode="Dine-in";S.code=null;
+    $$(".opt").forEach((x,i)=>x.classList.toggle("sel",i===0));$("#startBtn").textContent="Start ordering";$("#promo").value="";go("landing")};
+}
+
+/* ---------- Group ordering ---------- */
+function addPerson(name,isMe){const p={id:"p"+(++pid),name,me:!!isMe,vote:null};S.people.push(p);
+  if(!isMe){const all=MENU.flatMap(c=>c.items);for(let i=0,n=1+Math.floor(Math.random()*2);i<n;i++){const it=all[Math.floor(Math.random()*all.length)];
+    S.cart.push({uid:++cartSeq,id:it.id,n:it.n,e:it.e,c:it.c,desc:"Regular",price:it.p,qty:1,by:p.id})}}return p}
+function renderLobby(){
+  const m=me(),n=S.people.length;
+  if(!m){
+    $("#lobbyBody").innerHTML=`<div class="card"><h3>Start a group order</h3><p class="muted" style="margin-bottom:12px">Order together from one table. One person volunteers to pay — and earns 5% cashback on the whole bill.</p>
+      <div class="field"><input id="hostName" placeholder="Your name" maxlength="20"></div><div class="err" id="hostErr">Please enter your name</div></div>
+      <div class="card"><h3>How it works</h3>${["Invite 3 or more friends — each joins with their name","Everyone adds their own items to one shared order","Volunteer to pay. If several volunteer, one is picked at random","The payer earns 5% cashback in their ShardLab profile"].map((t,i)=>`<div class="prow"><div class="av" style="background:var(--brand-l);color:var(--brand-d)">${i+1}</div><div class="nm" style="font-weight:500;font-size:14px">${t}</div></div>`).join("")}</div>`;
+    $("#lobbyFoot").innerHTML=`<button class="btn" id="mkGroup">Create group</button>`;
+    $("#mkGroup").onclick=()=>{const v=$("#hostName").value.trim();if(!v){$("#hostErr").style.display="block";return}
+      S.code="KK-"+Math.floor(1000+Math.random()*9000);addPerson(v,true);S.name=v;renderLobby()};return}
+  const need=Math.max(0,MIN_GROUP-n);
+  $("#lobbyBody").innerHTML=`<div class="card"><h3>Invite friends</h3><div class="code">${S.code}</div>
+     <div class="row"><span class="muted">shardlab.my/g/${S.code.toLowerCase()}</span><button id="copyBtn" style="color:var(--brand-d);font-weight:700">Copy link</button></div></div>
+    <div class="card"><h3>In this group (${n}/${MAX_GROUP})</h3>${S.people.map(p=>`<div class="prow">${avatar(p)}<div class="nm">${p.name}${p.me?` <small>You · host</small>`:`<small>Joined</small>`}</div></div>`).join("")}
+      <div class="prog"><i style="width:${Math.min(100,n/MIN_GROUP*100)}%"></i></div><div class="muted">${need?`Group orders need at least ${MIN_GROUP} people — ${need} more to go`:"Group is ready to order ✓"}</div></div>
+    <div class="demo"><h3>Prototype controls</h3>
+      <div class="muted" style="margin-bottom:8px">When voting on who pays, friends will…</div>
+      <div class="chips">${[["mixed","Respond randomly"],["all","All volunteer"],["none","None volunteer"]].map(([k,l])=>`<button data-d="${k}" class="${S.demo===k?"on":""}">${l}</button>`).join("")}</div>
+      <button class="mini" id="addFriend">+ Friend joins</button><button class="mini" id="addThree">+ 3 friends join</button><button class="mini" id="prevJoin">Preview guest join screen</button></div>`;
+  $$("[data-d]").forEach(b=>b.onclick=()=>{S.demo=b.dataset.d;renderLobby()});
+  const add=()=>{if(S.people.length>=MAX_GROUP)return;const used=S.people.map(p=>p.name);const nm=NAMES.find(x=>!used.includes(x))||"Guest"+(S.people.length+1);addPerson(nm);toast(nm+" joined the group")};
+  $("#addFriend").onclick=()=>{add();renderLobby()};
+  $("#addThree").onclick=()=>{for(let i=0;i<3;i++)add();renderLobby()};
+  $("#prevJoin").onclick=()=>{$("#inviter").textContent=m.name;$("#guestName").value="";$("#guestErr").style.display="none";go("join")};
+  $("#copyBtn").onclick=()=>{try{navigator.clipboard.writeText("https://shardlab.my/g/"+S.code.toLowerCase())}catch(e){}toast("Invite link copied")};
+  $("#lobbyFoot").innerHTML=`<button class="btn" id="lobbyGo" ${need?"disabled":""}>${need?`Waiting for ${need} more friend${need>1?"s":""}`:`Start ordering · ${n} people`}</button>`;
+  $("#lobbyGo").onclick=()=>go("menu");
+}
+$("#joinBtn").onclick=()=>{const v=$("#guestName").value.trim(),e=$("#guestErr");
+  if(!v){e.textContent="Please enter your name to join";e.style.display="block";return}
+  if(S.people.some(p=>p.name.toLowerCase()===v.toLowerCase())){e.textContent="That name is taken — add an initial";e.style.display="block";return}
+  addPerson(v);go("lobby");toast(v+" joined the group")};
+
+function clearVote(){voteTimers.forEach(clearTimeout);voteTimers=[]}
+function startVote(){clearVote();S.people.forEach(p=>p.vote=null);S.vote={phase:"voting"};
+  S.people.filter(p=>!p.me).forEach((p,i)=>voteTimers.push(setTimeout(()=>{
+    p.vote=S.demo==="all"?"yes":S.demo==="none"?"no":(Math.random()<.4?"yes":"no");
+    if($("#s-vote").classList.contains("on"))renderVote();checkVote()},1300+i*1000+Math.random()*500)))}
+function checkVote(){if(!S.vote||S.vote.phase!=="voting"||!S.people.every(p=>p.vote))return;
+  const v=S.people.filter(p=>p.vote==="yes");
+  if(!v.length){S.vote={phase:"none"};renderVote()}
+  else if(v.length===1){S.vote={phase:"done",payerId:v[0].id,random:false};renderVote()}
+  else draw(v,{all:v.length===S.people.length})}
+function draw(pool,info){S.vote={phase:"drawing"};renderVote();
+  const iv=setInterval(()=>{const el=$("#rolling");if(el)el.textContent=pool[Math.floor(Math.random()*pool.length)].name},100);
+  setTimeout(()=>{clearInterval(iv);const w=pool[Math.floor(Math.random()*pool.length)];S.vote={phase:"done",payerId:w.id,random:true,n:pool.length,...info};renderVote()},2400)}
+function renderVote(){
+  const v=S.vote||{phase:"voting"},t=totals(),cbAmt=rm(r2(t.total*CB_RATE)),m=me();
+  let h="",foot=false;
+  if(v.phase==="voting")h=`<div class="cb"><span class="big">💜</span><div>Volunteer to pay the <b>${rm(t.total)}</b> bill and earn <b>${cbAmt}</b> (5%) cashback in your ShardLab profile.</div></div>
+    <div class="votebtns"><button class="vb ${m.vote==="yes"?"on":""}" id="vYes"><b>🙋 I'll pay</b><span>Earn ${cbAmt} cashback · if several volunteer, one is picked at random</span></button>
+    <button class="vb ${m.vote==="no"?"on":""}" id="vNo"><b>Not me</b><span>Someone else can pay</span></button></div>
+    ${m.vote?`<div class="muted" style="text-align:center;margin:12px 16px 0">Waiting for ${S.people.filter(p=>!p.vote).length||"everyone"} more…</div>`:""}`;
+  else if(v.phase==="drawing")h=`<div class="card" style="text-align:center"><div class="muted">Several people volunteered</div><h3 style="margin:6px 0">🎲 Picking the payer…</h3><div class="rolling" id="rolling">…</div></div>`;
+  else if(v.phase==="none")h=`<div class="card" style="text-align:center"><h3>Nobody volunteered</h3><p class="muted" style="margin:6px 0 14px">Ask again, or let ShardLab pick someone at random.</p>
+    <button class="btn" id="vRand">🎲 Pick randomly</button><button class="btn ghost" style="margin-top:10px" id="vAgain">Ask again</button></div>`;
+  else{const w=S.people.find(p=>p.id===v.payerId);foot=true;
+    h=`<div class="card" style="text-align:center">${avatar(w,"lg")}<h2>${w.me?"You're paying":w.name+" is paying"}</h2>
+     <p class="muted" style="margin-top:6px">${v.fromNone?"Nobody volunteered — picked at random":v.random?(v.all?"Everyone volunteered — picked at random":`Picked at random from ${v.n} volunteers`):"The only volunteer"}</p>
+     <div class="pill" style="margin-top:12px">${w.me?"You earn":w.name+" earns"} ${cbAmt} cashback</div></div>`;
+    $("#voteFoot").innerHTML=`<button class="btn" id="vGo">${w.me?"Continue to payment · "+rm(t.total):"Continue"}</button>`;}
+  if(v.phase!=="drawing"||true)h+=`<div class="card"><h3>Everyone (${S.people.length}) · ${rm(t.total)} bill</h3>${S.people.map(p=>{
+    const c=v.phase==="done"&&p.id===v.payerId?`<span class="chip pay">💳 Paying</span>`:p.vote==="yes"?`<span class="chip yes">🙋 Volunteered</span>`:p.vote==="no"?`<span class="chip">Not me</span>`:`<span class="chip wait">Deciding…</span>`;
+    return `<div class="prow">${avatar(p)}<div class="nm">${p.name}${p.me?` <small>You</small>`:""}</div>${c}</div>`}).join("")}</div>`;
+  $("#voteBody").innerHTML=h;$("#voteFoot").style.display=foot?"block":"none";
+  const q=id=>document.getElementById(id);
+  if(q("vYes"))q("vYes").onclick=()=>{m.vote="yes";renderVote();checkVote()};
+  if(q("vNo"))q("vNo").onclick=()=>{m.vote="no";renderVote();checkVote()};
+  if(q("vRand"))q("vRand").onclick=()=>draw(S.people,{fromNone:true});
+  if(q("vAgain"))q("vAgain").onclick=()=>{startVote();renderVote()};
+  if(q("vGo"))q("vGo").onclick=()=>{const w=S.people.find(p=>p.id===S.vote.payerId);w.me?go("checkout"):toWait(w)};
+}
+function toWait(w){$("#waitAv").innerHTML=avatar(w,"lg");$("#waitT").textContent=w.name+" is paying the bill";go("wait");
+  setTimeout(()=>{S.useCb=false;const t=totals(),no="SL"+Math.floor(10000+Math.random()*89999);
+    S.order={no,t,time:new Date(),items:[...S.cart],pay:"Paid by "+w.name,ref:"SL"+Date.now().toString().slice(-9),earned:0,bal:0,payer:w.name,payerMe:false,people:[...S.people]};
+    renderDone();go("done");startProgress(no)},3500)}
+
+/* ---------- Profile ---------- */
+function renderProfile(){
+  const a=ACC[S.phone];
+  $("#profBody").innerHTML=`<div class="card"><h3>Your mobile number</h3><div class="field"><span class="pre">🇲🇾 +60</span><input id="pPhone" type="tel" inputmode="numeric" maxlength="12" placeholder="12 345 6789" value="${fmtPh(S.phone.slice(3))}"></div>
+    <button class="btn" id="pLook">View my cashback</button></div>`+
+   (a?`<div class="cb" style="flex-direction:column;align-items:flex-start;gap:2px;background:linear-gradient(160deg,#7C4DFF,#4B22C9);color:#fff"><span style="opacity:.85">Hi ${a.name||"there"} · ShardLab cashback</span><span style="font-size:34px;font-weight:800">${rm(a.cb)}</span><span style="opacity:.85;font-size:13px">Use it on your next visit — switch it on at checkout.</span></div>
+    <div class="card"><h3>Activity</h3>${a.hist.length?a.hist.map(h=>`<div class="prow"><div class="nm" style="font-weight:600;font-size:14px">${h.note}<small>${new Date(h.t).toLocaleDateString("en-MY")}</small></div><b style="color:${h.amt>=0?"var(--green)":"var(--ink)"}">${h.amt>=0?"+":"−"} ${rm(Math.abs(h.amt))}</b></div>`).join(""):`<div class="muted">No activity yet</div>`}</div>`
+   :S.phone?`<div class="card"><div class="muted">No ShardLab account found for ${S.phone}. Volunteer to pay on a group order and earn 5% cashback — your profile is created automatically.</div></div>`
+   :`<div class="card"><div class="muted">Enter your mobile number to see your cashback. Group payers earn 5% on the whole bill.</div></div>`);
+  $("#pPhone").oninput=e=>e.target.value=fmtPh(e.target.value);
+  $("#pLook").onclick=()=>{const d=$("#pPhone").value.replace(/\D/g,"");if(!/^1\d{8,9}$/.test(d))return toast("Enter a valid mobile number");S.phone="+60"+d;S.useCb=false;renderProfile()};
+}
+renderMenu();
+</script>
+</body>
+</html>
